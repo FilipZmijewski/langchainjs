@@ -4,57 +4,67 @@ import {
   type BaseLLMParams,
 } from "@langchain/core/language_models/llms";
 import { type BaseLanguageModelCallOptions } from "@langchain/core/language_models/base";
-import { getEnvironmentVariable } from "@langchain/core/utils/env";
 import { WatsonXAI } from "@ibm-cloud/watsonx-ai";
 import {
+  DeploymentsTextGenerationParams,
+  DeploymentsTextGenerationStreamParams,
+  DeploymentTextGenProperties,
   ReturnOptionProperties,
   TextGenerationParams,
+  TextGenerationStreamParams,
   TextGenLengthPenalty,
   TextGenParameters,
 } from "@ibm-cloud/watsonx-ai/dist/watsonx-ai-ml/vml_v1.js";
 import { Generation, LLMResult } from "@langchain/core/outputs";
 import { GenerationChunk } from "@langchain/core/outputs";
+import { authenticateAndSetInstance } from "./utilis/authentication.js";
+import { TokenUsage, WatsonXAuth } from "./types.js";
 
 /**
  * Input to LLM class.
  */
-
-export interface WatsonXAuth {
-  apiKey?: string;
-  watsonxAIApikey?: string;
-  watsonxAIBearerToken?: string;
-  watsonxAIUsername?: string;
-  watsonxAIPassword?: string;
-  watsonxAIUrl?: string;
-  watsonxAIAuthType?: string;
+export interface WatsonXCallOptionsLLM extends BaseLanguageModelCallOptions {
+  options?: Omit<
+    TextGenerationParams &
+      TextGenerationStreamParams &
+      DeploymentsTextGenerationParams &
+      DeploymentsTextGenerationStreamParams,
+    "parameters"
+  >;
 }
 
-export interface WatsonXInput extends BaseLLMParams, TextGenParameters {
-  modelId: string;
+export interface WatsonXInit {
+  authenticator?: string;
   serviceUrl: string;
   version: string;
+}
+export interface WatsonXInput extends BaseLLMParams, TextGenParameters, WatsonXInit {
+  modelId?: string;
   spaceId?: string;
   projectId?: string;
+  idOrName?: string;
 }
 
 /**
  * Integration with an LLM.
  */
-export class WatsonX
-  extends BaseLLM<BaseLanguageModelCallOptions>
+export class WatsonX<CallOptions extends WatsonXCallOptionsLLM = WatsonXCallOptionsLLM>
+  extends BaseLLM<CallOptions>
   implements WatsonXInput
 {
   // Used for tracing, replace with the same name as your class
   static lc_name() {
     return "WatsonX";
   }
+
   lc_serializable = true;
   max_new_tokens = 100;
-  modelId: string;
+  modelId = "google/flan-ul2";
   serviceUrl: string;
   version: string;
   spaceId?: string;
   projectId?: string;
+  idOrName?: string;
   decoding_method?: TextGenParameters.Constants.DecodingMethod | string;
   length_penalty?: TextGenLengthPenalty;
   min_new_tokens?: number;
@@ -73,59 +83,37 @@ export class WatsonX
 
   constructor(fields: WatsonXInput & WatsonXAuth) {
     super(fields);
-    this.modelId = fields.modelId;
+    this.modelId = fields.modelId ? fields.modelId : this.modelId;
     this.version = fields.version;
-    console.log(fields);
+    this.max_new_tokens = fields.max_new_tokens
+      ? fields.max_new_tokens
+      : this.max_new_tokens;
+    this.serviceUrl = fields.serviceUrl;
+    this.decoding_method = fields.decoding_method;
+    this.length_penalty = fields.length_penalty;
+    this.min_new_tokens = fields.min_new_tokens;
+    this.random_seed = fields.random_seed;
+    this.stop_sequences = fields.stop_sequences;
+    this.temperature = fields.temperature;
+    this.time_limit = fields.time_limit;
+    this.top_k = fields.top_k;
+    this.top_p = fields.top_p;
+    this.repetition_penalty = fields.repetition_penalty;
+    this.truncate_input_tokens = fields.truncate_input_tokens;
+    this.return_options = fields.return_options;
+    this.include_stop_sequence = fields.include_stop_sequence;
+
     if (fields?.projectId) this.projectId = fields?.projectId;
     else if (fields?.spaceId) this.spaceId = fields?.spaceId;
+    else if (fields?.idOrName) this.idOrName = fields?.idOrName;
     else
       throw new Error(
         "You need to pass either spaceId or projectId to proceed"
       );
     this.serviceUrl = fields?.serviceUrl;
-    const authType = getEnvironmentVariable("WATSONX_AI_AUTH_TYPE");
-    const bearerToken = getEnvironmentVariable("WATSONX_AI_BEARER_TOKEN");
-    const apiKey = getEnvironmentVariable("WATSONX_AI_APIKEY");
-    const credentials =
-      getEnvironmentVariable("WATSONX_AI_USERNAME") &&
-      getEnvironmentVariable("WATSONX_AI_PASSWORD") &&
-      getEnvironmentVariable("WATSONX_AI_URL");
-    if (!authType || (!credentials && !bearerToken && !apiKey)) {
-      const chosenAuthType = fields?.watsonxAIAuthType;
-      if (!chosenAuthType)
-        throw new Error(
-          "No authentication type chosen. Check your enviromental variables or passed options"
-        );
-      process.env["WATSONX_AI_AUTH_TYPE"] = chosenAuthType;
-
-      const chosenBearerToken = fields?.watsonxAIBearerToken;
-      const chosenApiKey = fields?.watsonxAIApikey;
-      const chosenUsername = fields?.watsonxAIUsername;
-      const chosenPassword = fields?.watsonxAIPassword;
-      const chosenUrl = fields?.watsonxAIUrl;
-      if (chosenBearerToken)
-        process.env["WATSONX_AI_BEARER_TOKEN"] = chosenBearerToken;
-      else if (chosenApiKey) process.env["WATSONX_AI_APIKEY"] = chosenApiKey;
-      else if (chosenUsername && chosenPassword && chosenUrl) {
-        process.env["WATSONX_AI_USERNAME"] = chosenUsername;
-        process.env["WATSONX_AI_PASSWORD"] = chosenPassword;
-        process.env["WATSONX_AI_URL"] = chosenUrl;
-      } else
-        throw new Error(
-          "You have not provided any form of authentication, please check passed arguments"
-        );
-    }
-    this.serviceInstance = WatsonXAI.newInstance({
-      version: this.version,
-      serviceUrl: this.serviceUrl,
-    });
+    this.serviceInstance = authenticateAndSetInstance(fields);
   }
 
-  /**
-   * Replace with any secrets this class passes to `super`.
-   * See {@link ../../langchain-cohere/src/chat_model.ts} for
-   * an example.
-   */
   get lc_secrets(): { [key: string]: string } | undefined {
     return {
       authenticator: "AUTHENTICATOR",
@@ -154,18 +142,16 @@ export class WatsonX
     };
   }
 
-  /**
-   * For some given input string and options, return a string output.
-   */
-
-  ivocationParams(): TextGenParameters {
+  ivocationParams(
+    options: this["ParsedCallOptions"]
+  ): TextGenParameters | DeploymentTextGenProperties {
     return {
       max_new_tokens: this.max_new_tokens,
       decoding_method: this.decoding_method,
       length_penalty: this.length_penalty,
       min_new_tokens: this.min_new_tokens,
       random_seed: this.random_seed,
-      stop_sequences: this.stop_sequences,
+      stop_sequences: options?.stop ?? this.stop_sequences,
       temperature: this.temperature,
       time_limit: this.time_limit,
       top_k: this.top_k,
@@ -178,65 +164,105 @@ export class WatsonX
   }
 
   //one of these will awlays exist
-  scopeId(): { projectId: string } | { spaceId: string } {
-    return this.projectId
-      ? { projectId: this.projectId }
-      : { spaceId: this.spaceId as string };
+  scopeId() {
+    if (this.projectId) return { projectId: this.projectId };
+    else if (this.spaceId) return { spaceId: this.spaceId };
+    else return undefined;
   }
 
-  private async generateSingleMessage(input: string) {
-    //one of these always exists, it is guaranteed upper
+  private async generateSingleMessage(
+    input: string,
+    options: this["ParsedCallOptions"],
+    tokenUsage: TokenUsage
+  ) {
+    console.log(this);
+    const requestOptions = options.options ?? undefined;
+    const idOrName = options.options?.idOrName ?? this.idOrName;
+    const textGeneration = idOrName
+      ? await this.serviceInstance.deploymentGenerateText({
+          ...requestOptions,
+          idOrName: idOrName,
+          parameters: {
+            ...this.invocationParams(),
+            prompt_variables: {
+              input,
+            },
+          },
+        })
+      : await this.serviceInstance.generateText({
+          input,
+          parameters: this.invocationParams(),
+          modelId: this.modelId,
+          ...requestOptions,
+          ...this.scopeId(),
+        });
 
-    const params: TextGenerationParams = {
-      input,
-      parameters: this.invocationParams(),
-      modelId: this.modelId,
-      ...this.scopeId(),
-    };
-
-    try {
-      const textGeneration = await this.serviceInstance.generateText(params);
-      const singleGeneration: Generation[] = textGeneration.result.results.map(
-        (result) => {
-          return { text: result.generated_text, generationInfo: result };
-        }
-      );
-      return singleGeneration;
-    } catch (err) {
-      console.warn(err);
-      throw new Error("There was an error generating your text.");
-    }
+    const singleGeneration: Generation[] = textGeneration.result.results.map(
+      (result) => {
+        tokenUsage.generated_token_count += result.generated_token_count
+          ? result.generated_token_count
+          : 0;
+        tokenUsage.input_token_count += result.input_token_count
+          ? result.input_token_count
+          : 0;
+        return {
+          text: result.generated_text,
+          generationInfo: { stop_reason: result.stop_reason },
+        };
+      }
+    );
+    return singleGeneration;
   }
 
   async _generate(
     prompts: string[],
-    _options: this["ParsedCallOptions"],
+    options: this["ParsedCallOptions"],
     _runManager?: CallbackManagerForLLMRun
   ): Promise<LLMResult> {
+    const tokenUsage: TokenUsage = {
+      generated_token_count: 0,
+      input_token_count: 0,
+    };
     const generations = await Promise.all(
-      prompts.map(async (prompt) => await this.generateSingleMessage(prompt))
+      prompts.map(async (prompt) => {
+        if (options.signal?.aborted) {
+          throw new Error("AbortError");
+        }
+        return await this.generateSingleMessage(prompt, options, tokenUsage);
+      })
     );
     const result: LLMResult = { generations };
     return result;
   }
 
-  /**
-   * Implement to support streaming.
-   * Should yield chunks iteratively.
-   */
   async *_streamResponseChunks(
     prompt: string,
-    _options: this["ParsedCallOptions"],
+    options: this["ParsedCallOptions"],
     runManager?: CallbackManagerForLLMRun
   ): AsyncGenerator<GenerationChunk> {
-    const streamInferDeployedPrompt =
-      await this.serviceInstance.generateTextStream({
-        input: prompt,
-        parameters: this.invocationParams(),
-        modelId: this.modelId,
-        ...this.scopeId(),
-      });
+    const requestOptions = options.options ?? {};
+    const idOrName = options.options?.idOrName ?? this.idOrName;
 
+    const streamInferDeployedPrompt = idOrName
+      ? await this.serviceInstance.deploymentGenerateTextStream({
+          input: prompt,
+          parameters: {
+            ...this.invocationParams(),
+            prompt_variables: {
+              input: prompt,
+            },
+          },
+          ...this.scopeId(),
+          idOrName: idOrName,
+          ...requestOptions,
+        })
+      : await this.serviceInstance.generateTextStream({
+          input: prompt,
+          parameters: this.invocationParams(),
+          modelId: this.modelId,
+          ...this.scopeId(),
+          ...requestOptions,
+        });
     for await (const chunk of streamInferDeployedPrompt as any) {
       yield new GenerationChunk({
         text: chunk,
