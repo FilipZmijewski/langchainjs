@@ -1,7 +1,6 @@
 import { WatsonXAI } from "@ibm-cloud/watsonx-ai";
 import { getEnvironmentVariable } from "@langchain/core/utils/env";
-import { WatsonXInit } from "../llms.js";
-import { WatsonXAuth } from "../types.js";
+import { WatsonXAuth, WatsonXInit } from "../types.js";
 // @ts-ignore
 import { IamAuthenticator } from "ibm-cloud-sdk-core";
 

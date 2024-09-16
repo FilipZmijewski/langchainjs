@@ -1,9 +1,5 @@
 import { CallbackManagerForLLMRun } from "@langchain/core/callbacks/manager";
-import {
-  BaseLLM,
-  type BaseLLMParams,
-} from "@langchain/core/language_models/llms";
-import { type BaseLanguageModelCallOptions } from "@langchain/core/language_models/base";
+import { BaseLLM, BaseLLMParams } from "@langchain/core/language_models/llms";
 import { WatsonXAI } from "@ibm-cloud/watsonx-ai";
 import {
   DeploymentsTextGenerationParams,
@@ -18,12 +14,17 @@ import {
 import { Generation, LLMResult } from "@langchain/core/outputs";
 import { GenerationChunk } from "@langchain/core/outputs";
 import { authenticateAndSetInstance } from "./utilis/authentication.js";
-import { TokenUsage, WatsonXAuth } from "./types.js";
+import {
+  TokenUsage,
+  WatsonXAuth,
+  WatsonXCallOptions,
+  WatsonXParams,
+} from "./types.js";
 
 /**
  * Input to LLM class.
  */
-export interface WatsonXCallOptionsLLM extends BaseLanguageModelCallOptions {
+interface WatsonXCallOptionsLLM extends WatsonXCallOptions {
   options?: Omit<
     TextGenerationParams &
       TextGenerationStreamParams &
@@ -33,24 +34,19 @@ export interface WatsonXCallOptionsLLM extends BaseLanguageModelCallOptions {
   >;
 }
 
-export interface WatsonXInit {
-  authenticator?: string;
-  serviceUrl: string;
-  version: string;
-}
-export interface WatsonXInput extends BaseLLMParams, TextGenParameters, WatsonXInit {
-  modelId?: string;
-  spaceId?: string;
-  projectId?: string;
-  idOrName?: string;
-}
+export interface WatsonXInputLLM
+  extends TextGenParameters,
+    WatsonXParams,
+    BaseLLMParams {}
 
 /**
  * Integration with an LLM.
  */
-export class WatsonX<CallOptions extends WatsonXCallOptionsLLM = WatsonXCallOptionsLLM>
+export class WatsonX<
+    CallOptions extends WatsonXCallOptionsLLM = WatsonXCallOptionsLLM
+  >
   extends BaseLLM<CallOptions>
-  implements WatsonXInput
+  implements WatsonXInputLLM
 {
   // Used for tracing, replace with the same name as your class
   static lc_name() {
@@ -59,7 +55,7 @@ export class WatsonX<CallOptions extends WatsonXCallOptionsLLM = WatsonXCallOpti
 
   lc_serializable = true;
   max_new_tokens = 100;
-  modelId = "google/flan-ul2";
+  modelId = "ibm/granite-13b-chat-v2";
   serviceUrl: string;
   version: string;
   spaceId?: string;
@@ -81,7 +77,7 @@ export class WatsonX<CallOptions extends WatsonXCallOptionsLLM = WatsonXCallOpti
 
   private serviceInstance: WatsonXAI;
 
-  constructor(fields: WatsonXInput & WatsonXAuth) {
+  constructor(fields: WatsonXInputLLM & WatsonXAuth) {
     super(fields);
     this.modelId = fields.modelId ? fields.modelId : this.modelId;
     this.version = fields.version;
@@ -163,7 +159,6 @@ export class WatsonX<CallOptions extends WatsonXCallOptionsLLM = WatsonXCallOpti
     };
   }
 
-  //one of these will awlays exist
   scopeId() {
     if (this.projectId) return { projectId: this.projectId };
     else if (this.spaceId) return { spaceId: this.spaceId };
@@ -175,7 +170,6 @@ export class WatsonX<CallOptions extends WatsonXCallOptionsLLM = WatsonXCallOpti
     options: this["ParsedCallOptions"],
     tokenUsage: TokenUsage
   ) {
-    console.log(this);
     const requestOptions = options.options ?? undefined;
     const idOrName = options.options?.idOrName ?? this.idOrName;
     const textGeneration = idOrName
@@ -264,6 +258,9 @@ export class WatsonX<CallOptions extends WatsonXCallOptionsLLM = WatsonXCallOpti
           ...requestOptions,
         });
     for await (const chunk of streamInferDeployedPrompt as any) {
+      if (options.signal?.aborted) {
+        throw new Error("AbortError");
+      }
       yield new GenerationChunk({
         text: chunk,
       });
