@@ -2,30 +2,29 @@ import { Embeddings } from "@langchain/core/embeddings";
 import { WatsonXAuth, WatsonXParams } from "./types.js";
 import {
   EmbeddingParameters,
-  EmbeddingReturnOptions,
   TextEmbeddingsParams,
 } from "@ibm-cloud/watsonx-ai/dist/watsonx-ai-ml/vml_v1.js";
 import { WatsonXAI } from "@ibm-cloud/watsonx-ai";
 import { authenticateAndSetInstance } from "./utilis/authentication.js";
+import { AsyncCaller } from "@langchain/core/utils/async_caller";
 
-interface WatsonXEmbeddingsParams
+export interface WatsonXEmbeddingsParams
   extends WatsonXParams,
-    EmbeddingParameters,
+    Omit<EmbeddingParameters, "return_options">,
     Pick<TextEmbeddingsParams, "headers"> {
   maxConcurrency?: number;
+  maxRetries?: number;
 }
 
-export class WatsonXEmbeddings
-  extends Embeddings
-  implements WatsonXEmbeddingsParams
-{
+export class WatsonXEmbeddings extends Embeddings implements WatsonXEmbeddingsParams {
   modelId = "ibm/slate-125m-english-rtrvr";
   serviceUrl: string;
   version: string;
   spaceId?: string;
   projectId?: string;
   truncate_input_tokens?: number;
-  return_options?: EmbeddingReturnOptions;
+  maxRetries?: number;
+  maxConcurrency?: number;
   private serviceInstance: WatsonXAI;
 
   constructor(fields: WatsonXEmbeddingsParams & WatsonXAuth) {
@@ -35,15 +34,17 @@ export class WatsonXEmbeddings
     this.version = fields.version;
     this.serviceUrl = fields.serviceUrl;
     this.truncate_input_tokens = fields.truncate_input_tokens;
-    this.return_options = fields.return_options;
-    if (fields?.projectId) this.projectId = fields?.projectId;
-    else if (fields?.spaceId) this.spaceId = fields?.spaceId;
-    else
+    this.maxConcurrency = fields.maxConcurrency;
+    this.maxRetries = fields.maxRetries;
+    if (fields.projectId && fields.spaceId)
+      throw new Error("Maximum 1 id type can be specified per instance");
+    else if (!fields.projectId && !fields.spaceId && !fields.idOrName)
       throw new Error(
-        "You need to pass either spaceId or projectId to proceed"
+        "No id specified! At least id of 1 type has to be specified"
       );
+    this.projectId = fields?.projectId;
+    this.spaceId = fields?.spaceId;
     this.serviceUrl = fields?.serviceUrl;
-
     this.serviceInstance = authenticateAndSetInstance(fields);
   }
   scopeId() {
@@ -54,16 +55,23 @@ export class WatsonXEmbeddings
   ivocationParams(): EmbeddingParameters {
     return {
       truncate_input_tokens: this.truncate_input_tokens,
-      return_options: this.return_options,
     };
+  }
+
+  async completionWithRetry<T>(callback: () => T) {
+    const caller = new AsyncCaller({
+      maxConcurrency: this.maxConcurrency,
+      maxRetries: this.maxRetries,
+    });
+    return caller.call(async () => callback());
   }
 
   async listModels() {
     const listModelParams = {
       filters: "function_embedding",
     };
-    const listModels = await this.serviceInstance.listFoundationModelSpecs(
-      listModelParams
+    const listModels = await this.completionWithRetry(() =>
+      this.serviceInstance.listFoundationModelSpecs(listModelParams)
     );
     return listModels.result.resources?.map((item) => item.model_id);
   }
@@ -75,8 +83,9 @@ export class WatsonXEmbeddings
       ...this.scopeId(),
       parameters: this.ivocationParams(),
     };
-    const embeddings = await this.serviceInstance.embedText(
-      textEmbeddingParams
+
+    const embeddings = await this.completionWithRetry(() =>
+      this.serviceInstance.embedText(textEmbeddingParams)
     );
     return embeddings.result.results.map((item) => item.embedding);
   }
