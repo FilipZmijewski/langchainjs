@@ -10,41 +10,51 @@ import {
   TextGenerationStreamParams,
   TextGenLengthPenalty,
   TextGenParameters,
+  TextTokenizationParams,
+  TextTokenizeParameters,
 } from "@ibm-cloud/watsonx-ai/dist/watsonx-ai-ml/vml_v1.js";
 import { Generation, LLMResult } from "@langchain/core/outputs";
 import { GenerationChunk } from "@langchain/core/outputs";
 import { authenticateAndSetInstance } from "./utilis/authentication.js";
 import {
+  GenerationInfo,
+  ResponseChunk,
   TokenUsage,
   WatsonXAuth,
-  WatsonXCallOptions,
   WatsonXParams,
 } from "./types.js";
+import { BaseLanguageModelCallOptions } from "@langchain/core/language_models/base";
+import { AsyncCaller } from "@langchain/core/utils/async_caller";
 
 /**
  * Input to LLM class.
  */
-interface WatsonXCallOptionsLLM extends WatsonXCallOptions {
-  options?: Omit<
-    TextGenerationParams &
-      TextGenerationStreamParams &
-      DeploymentsTextGenerationParams &
-      DeploymentsTextGenerationStreamParams,
-    "parameters"
-  >;
+
+export interface WatsonXCallOptionsLLM
+  extends BaseLanguageModelCallOptions,
+    Omit<
+      Partial<
+        TextGenerationParams &
+          TextGenerationStreamParams &
+          DeploymentsTextGenerationParams &
+          DeploymentsTextGenerationStreamParams
+      >,
+      "input"
+    > {
+  maxRetries?: number;
 }
 
 export interface WatsonXInputLLM
   extends TextGenParameters,
     WatsonXParams,
-    BaseLLMParams {}
+    BaseLLMParams {
+  streaming?: boolean;
+}
 
 /**
  * Integration with an LLM.
  */
-export class WatsonX<
-    CallOptions extends WatsonXCallOptionsLLM = WatsonXCallOptionsLLM
-  >
+export class WatsonX<CallOptions extends WatsonXCallOptionsLLM = WatsonXCallOptionsLLM>
   extends BaseLLM<CallOptions>
   implements WatsonXInputLLM
 {
@@ -54,10 +64,13 @@ export class WatsonX<
   }
 
   lc_serializable = true;
-  max_new_tokens = 100;
+  streaming = false;
   modelId = "ibm/granite-13b-chat-v2";
+  maxRetries = 0;
+
   serviceUrl: string;
   version: string;
+  max_new_tokens?: number;
   spaceId?: string;
   projectId?: string;
   idOrName?: string;
@@ -74,16 +87,15 @@ export class WatsonX<
   truncate_input_tokens?: number;
   return_options?: ReturnOptionProperties;
   include_stop_sequence?: boolean;
+  maxConcurrency?: number;
 
-  private serviceInstance: WatsonXAI;
+  private service: WatsonXAI;
 
   constructor(fields: WatsonXInputLLM & WatsonXAuth) {
     super(fields);
-    this.modelId = fields.modelId ? fields.modelId : this.modelId;
+    this.modelId = fields.modelId ?? this.modelId;
     this.version = fields.version;
-    this.max_new_tokens = fields.max_new_tokens
-      ? fields.max_new_tokens
-      : this.max_new_tokens;
+    this.max_new_tokens = fields.max_new_tokens ?? this.max_new_tokens;
     this.serviceUrl = fields.serviceUrl;
     this.decoding_method = fields.decoding_method;
     this.length_penalty = fields.length_penalty;
@@ -98,19 +110,49 @@ export class WatsonX<
     this.truncate_input_tokens = fields.truncate_input_tokens;
     this.return_options = fields.return_options;
     this.include_stop_sequence = fields.include_stop_sequence;
+    this.maxRetries = fields.maxRetries || this.maxRetries;
+    this.maxConcurrency = fields.maxConcurrency;
+    this.streaming = fields.streaming || this.streaming;
+    if (
+      (fields.projectId && fields.spaceId) ||
+      (fields.idOrName && fields.projectId) ||
+      (fields.spaceId && fields.idOrName)
+    )
+      throw new Error("Maximum 1 id type can be specified per instance");
 
-    if (fields?.projectId) this.projectId = fields?.projectId;
-    else if (fields?.spaceId) this.spaceId = fields?.spaceId;
-    else if (fields?.idOrName) this.idOrName = fields?.idOrName;
-    else
+    if (!fields.projectId && !fields.spaceId && !fields.idOrName)
       throw new Error(
-        "You need to pass either spaceId or projectId to proceed"
+        "No id specified! At least ide of 1 type has to be specified"
       );
+    this.projectId = fields?.projectId;
+    this.spaceId = fields?.spaceId;
+    this.idOrName = fields?.idOrName;
+
     this.serviceUrl = fields?.serviceUrl;
-    this.serviceInstance = authenticateAndSetInstance(fields);
+    const {
+      watsonxAIApikey,
+      watsonxAIAuthType,
+      watsonxAIBearerToken,
+      watsonxAIUsername,
+      watsonxAIPassword,
+      watsonxAIUrl,
+      version,
+      serviceUrl,
+    } = fields;
+
+    this.service = authenticateAndSetInstance({
+      watsonxAIApikey,
+      watsonxAIAuthType,
+      watsonxAIBearerToken,
+      watsonxAIUsername,
+      watsonxAIPassword,
+      watsonxAIUrl,
+      version,
+      serviceUrl,
+    });
   }
 
-  get lc_secrets(): { [key: string]: string } | undefined {
+  get lc_secrets(): { [key: string]: string } {
     return {
       authenticator: "AUTHENTICATOR",
       apiKey: "WATSONX_AI_APIKEY",
@@ -124,7 +166,7 @@ export class WatsonX<
     };
   }
 
-  get lc_aliases(): { [key: string]: string } | undefined {
+  get lc_aliases(): { [key: string]: string } {
     return {
       authenticator: "authenticator",
       apikey: "watsonx_ai_apikey",
@@ -138,74 +180,154 @@ export class WatsonX<
     };
   }
 
-  ivocationParams(
+  invocationParams(
     options: this["ParsedCallOptions"]
   ): TextGenParameters | DeploymentTextGenProperties {
+    const { parameters } = options;
+
     return {
-      max_new_tokens: this.max_new_tokens,
-      decoding_method: this.decoding_method,
-      length_penalty: this.length_penalty,
-      min_new_tokens: this.min_new_tokens,
-      random_seed: this.random_seed,
+      max_new_tokens: parameters?.max_new_tokens ?? this.max_new_tokens,
+      decoding_method: parameters?.decoding_method ?? this.decoding_method,
+      length_penalty: parameters?.length_penalty ?? this.length_penalty,
+      min_new_tokens: parameters?.min_new_tokens ?? this.min_new_tokens,
+      random_seed: parameters?.random_seed ?? this.random_seed,
       stop_sequences: options?.stop ?? this.stop_sequences,
-      temperature: this.temperature,
-      time_limit: this.time_limit,
-      top_k: this.top_k,
-      top_p: this.top_p,
-      repetition_penalty: this.repetition_penalty,
-      truncate_input_tokens: this.truncate_input_tokens,
-      return_options: this.return_options,
-      include_stop_sequence: this.include_stop_sequence,
+      temperature: parameters?.temperature ?? this.temperature,
+      time_limit: parameters?.time_limit ?? this.time_limit,
+      top_k: parameters?.top_k ?? this.top_k,
+      top_p: parameters?.top_p ?? this.top_p,
+      repetition_penalty:
+        parameters?.repetition_penalty ?? this.repetition_penalty,
+      truncate_input_tokens:
+        parameters?.truncate_input_tokens ?? this.truncate_input_tokens,
+      return_options: parameters?.return_options ?? this.return_options,
+      include_stop_sequence:
+        parameters?.include_stop_sequence ?? this.include_stop_sequence,
     };
   }
 
   scopeId() {
-    if (this.projectId) return { projectId: this.projectId };
-    else if (this.spaceId) return { spaceId: this.spaceId };
-    else return undefined;
+    if (this.projectId)
+      return { projectId: this.projectId, modelId: this.modelId };
+    else if (this.spaceId)
+      return { spaceId: this.spaceId, modelId: this.modelId };
+    else if (this.idOrName)
+      return { idOrName: this.idOrName, modelId: this.modelId };
+    else return { spaceId: this.spaceId, modelId: this.modelId };
   }
 
   private async generateSingleMessage(
     input: string,
     options: this["ParsedCallOptions"],
-    tokenUsage: TokenUsage
-  ) {
-    const requestOptions = options.options ?? undefined;
-    const idOrName = options.options?.idOrName ?? this.idOrName;
-    const textGeneration = idOrName
-      ? await this.serviceInstance.deploymentGenerateText({
-          ...requestOptions,
-          idOrName: idOrName,
-          parameters: {
-            ...this.invocationParams(),
-            prompt_variables: {
-              input,
-            },
-          },
-        })
-      : await this.serviceInstance.generateText({
-          input,
-          parameters: this.invocationParams(),
-          modelId: this.modelId,
-          ...requestOptions,
-          ...this.scopeId(),
-        });
+    stream: true,
+    tokenUsage?: TokenUsage
+  ): Promise<ReadableStream<WatsonXAI.Response<WatsonXAI.TextGenResponse[]>>>;
 
-    const singleGeneration: Generation[] = textGeneration.result.results.map(
-      (result) => {
-        tokenUsage.generated_token_count += result.generated_token_count
-          ? result.generated_token_count
-          : 0;
-        tokenUsage.input_token_count += result.input_token_count
-          ? result.input_token_count
-          : 0;
-        return {
-          text: result.generated_text,
-          generationInfo: { stop_reason: result.stop_reason },
-        };
+  private async generateSingleMessage(
+    input: string,
+    options: this["ParsedCallOptions"],
+    stream: false,
+    tokenUsage?: TokenUsage
+  ): Promise<Generation[]>;
+
+  private async generateSingleMessage(
+    input: string,
+    options: this["ParsedCallOptions"],
+    stream: boolean,
+    tokenUsage = { generated_token_count: 0, input_token_count: 0 }
+  ) {
+    const {
+      signal,
+      stop,
+      maxRetries,
+      maxConcurrency,
+      timeout,
+      ...requestOptions
+    } = options;
+
+    const idOrName = options?.idOrName ?? this.idOrName;
+    const parameters = this.invocationParams(options);
+    if (stream) {
+      const textStream = idOrName
+        ? await this.service.deploymentGenerateTextStream({
+            idOrName: idOrName,
+            ...requestOptions,
+            parameters: {
+              ...this.invocationParams(options),
+              prompt_variables: {
+                input,
+              },
+            },
+          })
+        : await this.service.generateTextStream({
+            input,
+            parameters: this.invocationParams(options),
+            ...this.scopeId(),
+            ...requestOptions,
+          });
+      return textStream;
+    } else {
+      const textGenerationPromise = idOrName
+        ? this.service.deploymentGenerateText({
+            ...requestOptions,
+            idOrName,
+            parameters: {
+              ...parameters,
+              prompt_variables: {
+                input,
+              },
+            },
+          })
+        : this.service.generateText({
+            input,
+            parameters,
+            ...requestOptions,
+            ...this.scopeId(),
+          });
+
+      try {
+        const textGeneration = await textGenerationPromise;
+        const singleGeneration: Generation[] =
+          textGeneration.result.results.map((result) => {
+            tokenUsage.generated_token_count += result.generated_token_count
+              ? result.generated_token_count
+              : 0;
+            tokenUsage.input_token_count += result.input_token_count
+              ? result.input_token_count
+              : 0;
+            return {
+              text: result.generated_text,
+              generationInfo: {
+                stop_reason: result.stop_reason,
+                ...tokenUsage,
+              },
+            };
+          });
+        return singleGeneration;
+      } catch (err) {
+        throw err;
       }
-    );
-    return singleGeneration;
+    }
+  }
+
+  async completionWithRetry<T>(
+    callback: () => T,
+    options?: this["ParsedCallOptions"]
+  ) {
+    const caller = new AsyncCaller({
+      maxConcurrency: options?.maxConcurrency || this.maxConcurrency,
+      maxRetries: this.maxRetries,
+    });
+    const result = options
+      ? caller.callWithOptions(
+          {
+            signal: options.signal,
+          },
+          async () => callback()
+        )
+      : caller.call(async () => callback());
+
+    return result;
   }
 
   async _generate(
@@ -217,16 +339,124 @@ export class WatsonX<
       generated_token_count: 0,
       input_token_count: 0,
     };
-    const generations = await Promise.all(
-      prompts.map(async (prompt) => {
-        if (options.signal?.aborted) {
-          throw new Error("AbortError");
-        }
-        return await this.generateSingleMessage(prompt, options, tokenUsage);
-      })
-    );
-    const result: LLMResult = { generations };
-    return result;
+
+    if (this.streaming) {
+      const generations: Generation[][] = await Promise.all(
+        prompts.map(async (prompt, promptIdx) => {
+          if (options.signal?.aborted) {
+            throw new Error("AbortError");
+          }
+          const callback = () =>
+            this.generateSingleMessage(prompt, options, true, tokenUsage);
+
+          type ReturnMessage = ReturnType<typeof callback>;
+          const stream = await this.completionWithRetry<ReturnMessage>(
+            callback,
+            options
+          );
+
+          const responseChunk: ResponseChunk = {
+            id: 0,
+            event: "",
+            data: {
+              results: [],
+            },
+          };
+          const messages: ResponseChunk[] = [];
+          type ResponseChunkKeys = keyof ResponseChunk;
+          for await (const chunk of stream as any) {
+            if (chunk.length > 0) {
+              const index = chunk.indexOf(": ");
+              const [key, value] = [
+                chunk.substring(0, index) as ResponseChunkKeys,
+                chunk.substring(index + 2),
+              ];
+              if (key === "id") {
+                responseChunk[key] = Number(value);
+              } else if (key === "event") {
+                responseChunk[key] = String(value);
+              } else {
+                responseChunk[key] = JSON.parse(value);
+              }
+            } else if (chunk.length === 0) {
+              messages.push(JSON.parse(JSON.stringify(responseChunk)));
+              Object.assign(responseChunk, { id: 0, event: "", data: {} });
+            }
+          }
+
+          const geneartionsArray: GenerationInfo[] = [];
+          for (const message of messages) {
+            message.data.results.forEach((item, index) => {
+              const generationInfo: GenerationInfo = {
+                text: "",
+                stop_reason: "",
+                generated_token_count: 0,
+                input_token_count: 0,
+              };
+              void _runManager?.handleLLMNewToken(item.generated_text, {
+                prompt: promptIdx,
+                completion: 1,
+              });
+              geneartionsArray[index] ??= generationInfo;
+              geneartionsArray[index].generated_token_count =
+                item.generated_token_count;
+              geneartionsArray[index].input_token_count +=
+                item.input_token_count;
+              geneartionsArray[index].stop_reason = item.stop_reason;
+              geneartionsArray[index].text += item.generated_text;
+            });
+          }
+
+          return geneartionsArray.map((item) => {
+            const { text, ...rest } = item;
+            tokenUsage.generated_token_count += rest.generated_token_count;
+            tokenUsage.input_token_count += rest.input_token_count;
+            return {
+              text,
+              generationInfo: rest,
+            };
+          });
+        })
+      );
+      const result: LLMResult = { generations, llmOutput: { tokenUsage } };
+      return result;
+    } else {
+      const generations: Generation[][] = await Promise.all(
+        prompts.map(async (prompt) => {
+          if (options.signal?.aborted) {
+            throw new Error("AbortError");
+          }
+
+          const callback = () =>
+            this.generateSingleMessage(prompt, options, false, tokenUsage);
+          type ReturnMessage = ReturnType<typeof callback>;
+
+          const response = await this.completionWithRetry<ReturnMessage>(
+            callback,
+            options
+          );
+          return response;
+        })
+      );
+      const result: LLMResult = { generations, llmOutput: { tokenUsage } };
+      return result;
+    }
+  }
+
+  async getNumTokens(
+    content: string,
+    options?: TextTokenizeParameters
+  ): Promise<number> {
+    const params: TextTokenizationParams = {
+      ...this.scopeId(),
+      input: content,
+      parameters: options,
+    };
+    const callback = () => this.service.tokenizeText(params);
+    type ReturnTokens = ReturnType<typeof callback>;
+
+    const response = await this.completionWithRetry<ReturnTokens>(callback);
+    return response.result.result.token_count;
   }
 
   async *_streamResponseChunks(
@@ -234,37 +464,51 @@ export class WatsonX<
     options: this["ParsedCallOptions"],
     runManager?: CallbackManagerForLLMRun
   ): AsyncGenerator<GenerationChunk> {
-    const requestOptions = options.options ?? {};
-    const idOrName = options.options?.idOrName ?? this.idOrName;
-
-    const streamInferDeployedPrompt = idOrName
-      ? await this.serviceInstance.deploymentGenerateTextStream({
-          input: prompt,
-          parameters: {
-            ...this.invocationParams(),
-            prompt_variables: {
-              input: prompt,
-            },
-          },
-          ...this.scopeId(),
-          idOrName: idOrName,
-          ...requestOptions,
-        })
-      : await this.serviceInstance.generateTextStream({
-          input: prompt,
-          parameters: this.invocationParams(),
-          modelId: this.modelId,
-          ...this.scopeId(),
-          ...requestOptions,
-        });
+    const callback = () => this.generateSingleMessage(prompt, options, true);
+    type ReturnStream = ReturnType<typeof callback>;
+    const streamInferDeployedPrompt =
+      await this.completionWithRetry<ReturnStream>(callback);
+    const responseChunk: ResponseChunk = {
+      id: 0,
+      event: "",
+      data: {
+        results: [],
+      },
+    };
     for await (const chunk of streamInferDeployedPrompt as any) {
       if (options.signal?.aborted) {
         throw new Error("AbortError");
       }
-      yield new GenerationChunk({
-        text: chunk,
-      });
-      await runManager?.handleLLMNewToken(chunk.response ?? "");
+
+      type Keys = keyof typeof responseChunk;
+      if (chunk.length > 0) {
+        const index = chunk.indexOf(": ");
+        const [key, value] = [
+          chunk.substring(0, index) as Keys,
+          chunk.substring(index + 2),
+        ];
+        if (key === "id") {
+          responseChunk[key] = Number(value);
+        } else if (key === "event") {
+          responseChunk[key] = String(value);
+        } else {
+          responseChunk[key] = JSON.parse(value);
+        }
+      } else if (
+        chunk.length === 0 &&
+        responseChunk.data?.results?.length > 0
+      ) {
+        for (const item of responseChunk.data.results) {
+          yield new GenerationChunk({
+            text: item.generated_text,
+            generationInfo: {
+              stop_reason: item.stop_reason,
+            },
+          });
+          await runManager?.handleLLMNewToken(item.generated_text ?? "");
+        }
+        Object.assign(responseChunk, { id: 0, event: "", data: {} });
+      }
     }
   }
 
