@@ -233,7 +233,7 @@ export class WatsonXLLM<
     options: this["ParsedCallOptions"],
     stream: true,
     tokenUsage?: TokenUsage
-  ): Promise<ReadableStream<WatsonXAI.Response<WatsonXAI.TextGenResponse[]>>>;
+  ): Promise<AsyncIterable<string>>;
 
   private async generateSingleMessage(
     input: string,
@@ -375,7 +375,7 @@ export class WatsonXLLM<
           };
           const messages: ResponseChunk[] = [];
           type ResponseChunkKeys = keyof ResponseChunk;
-          for await (const chunk of stream as any) {
+          for await (const chunk of stream) {
             if (chunk.length > 0) {
               const index = chunk.indexOf(": ");
               const [key, value] = [
@@ -486,7 +486,7 @@ export class WatsonXLLM<
         results: [],
       },
     };
-    for await (const chunk of streamInferDeployedPrompt as any) {
+    for await (const chunk of streamInferDeployedPrompt) {
       if (options.signal?.aborted) {
         throw new Error("AbortError");
       }

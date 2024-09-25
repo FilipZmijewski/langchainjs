@@ -32,7 +32,7 @@
   "author": "LangChain",
   "license": "MIT",
   "dependencies": {
-    "@ibm-cloud/watsonx-ai": "^1.0.1",
+    "@ibm-cloud/watsonx-ai": "^1.0.2",
     "@langchain/core": ">0.1.0 <0.3.0"
   },
   "devDependencies": {

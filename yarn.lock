@@ -10355,14 +10355,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@ibm-cloud/watsonx-ai@npm:^1.0.1":
-  version: 1.0.1
-  resolution: "@ibm-cloud/watsonx-ai@npm:1.0.1"
+"@ibm-cloud/watsonx-ai@npm:^1.0.2":
+  version: 1.0.2
+  resolution: "@ibm-cloud/watsonx-ai@npm:1.0.2"
   dependencies:
     "@types/node": ^12.0.8
     extend: 3.0.2
     ibm-cloud-sdk-core: ^4.2.5
-  checksum: 843aa748f2568e5850df7718c38897dd668bc560426a339974cbd481ddf04579a54d661aa16b84d29c2b4d8aab0925ca3fbe78c31beb82e7cdc9ca02bd7a4e07
+  checksum: 46744d429657872d2d5b0842564dabd5ff06aa1d27554bd44b240f8db0f4bdd8131cb53e979c115f771862922877cf135d6f858eb36929ac556f9a7f1e7eaa89
   languageName: node
   linkType: hard
 
@@ -32399,7 +32399,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "langchain-ibm@workspace:libs/langchain-ibm"
   dependencies:
-    "@ibm-cloud/watsonx-ai": ^1.0.1
+    "@ibm-cloud/watsonx-ai": ^1.0.2
     "@jest/globals": ^29.5.0
     "@langchain/core": ">0.1.0 <0.3.0"
     "@langchain/scripts": ">=0.1.0 <0.2.0"
