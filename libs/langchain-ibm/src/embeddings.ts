@@ -9,14 +9,13 @@ import { authenticateAndSetInstance } from "./utilis/authentication.js";
 import { AsyncCaller } from "@langchain/core/utils/async_caller";
 
 export interface WatsonXEmbeddingsParams
-  extends WatsonXParams,
-    Omit<EmbeddingParameters, "return_options">,
-    Pick<TextEmbeddingsParams, "headers"> {
-  maxConcurrency?: number;
-  maxRetries?: number;
-}
+  extends Omit<EmbeddingParameters, "return_options">,
+    Pick<TextEmbeddingsParams, "headers"> {}
 
-export class WatsonXEmbeddings extends Embeddings implements WatsonXEmbeddingsParams {
+export class WatsonXEmbeddings
+  extends Embeddings
+  implements WatsonXEmbeddingsParams, WatsonXParams
+{
   modelId = "ibm/slate-125m-english-rtrvr";
   serviceUrl: string;
   version: string;
@@ -27,7 +26,7 @@ export class WatsonXEmbeddings extends Embeddings implements WatsonXEmbeddingsPa
   maxConcurrency?: number;
   private serviceInstance: WatsonXAI;
 
-  constructor(fields: WatsonXEmbeddingsParams & WatsonXAuth) {
+  constructor(fields: WatsonXEmbeddingsParams & WatsonXAuth & WatsonXParams) {
     const superProps = { maxConcurrency: 2, ...fields };
     super(superProps);
     this.modelId = fields?.modelId ? fields.modelId : this.modelId;

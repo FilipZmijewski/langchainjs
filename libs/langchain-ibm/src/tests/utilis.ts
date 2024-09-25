@@ -1,11 +1,11 @@
 import { WatsonXEmbeddings, WatsonXEmbeddingsParams } from "../embeddings.js";
-import { WatsonX, WatsonXInputLLM } from "../llms.js";
+import { WatsonXInputLLM, WatsonXLLM } from "../llms.js";
 
 export function getKey<K>(key: K): K {
   return key;
 }
 export const testProperties = (
-  instance: WatsonX | WatsonXEmbeddings,
+  instance: WatsonXLLM | WatsonXEmbeddings,
   testProps: WatsonXInputLLM,
   notExTestProps?: { [key: string]: any }
 ) => {

@@ -1,4 +1,4 @@
-import { WatsonX, WatsonXInputLLM } from "../llms.js";
+import { WatsonXLLM, WatsonXInputLLM } from "../llms.js";
 import { CallbackManager } from "@langchain/core/callbacks/manager";
 import { LLMResult } from "@langchain/core/outputs";
 import { TokenUsage } from "../types.js";
@@ -8,7 +8,7 @@ const originalBackground = process.env.LANGCHAIN_CALLBACKS_BACKGROUND;
 describe("Text generation", () => {
   describe("Test invoke method", () => {
     test("Correct value", async () => {
-      const watsonXInstance = new WatsonX({
+      const watsonXInstance = new WatsonXLLM({
         version: "2024-05-31",
         serviceUrl: process.env.API_URL as string,
         projectId: process.env.PROJECT_ID,
@@ -17,7 +17,7 @@ describe("Text generation", () => {
     });
 
     test("Invalid projectId", async () => {
-      const watsonXInstance = new WatsonX({
+      const watsonXInstance = new WatsonXLLM({
         version: "2024-05-31",
         serviceUrl: process.env.API_URL as string,
         projectId: "Test wrong value",
@@ -26,7 +26,7 @@ describe("Text generation", () => {
     });
 
     test("Invalid credentials", async () => {
-      const watsonXInstance = new WatsonX({
+      const watsonXInstance = new WatsonXLLM({
         version: "2024-05-31",
         serviceUrl: process.env.API_URL as string,
         projectId: "Test wrong value",
@@ -38,7 +38,7 @@ describe("Text generation", () => {
     });
 
     test("Wrong value", async () => {
-      const watsonXInstance = new WatsonX({
+      const watsonXInstance = new WatsonXLLM({
         version: "2024-05-31",
         serviceUrl: process.env.API_URL as string,
         projectId: process.env.PROJECT_ID,
@@ -48,7 +48,7 @@ describe("Text generation", () => {
     });
 
     test("Stop", async () => {
-      const watsonXInstance = new WatsonX({
+      const watsonXInstance = new WatsonXLLM({
         version: "2024-05-31",
         serviceUrl: process.env.API_URL as string,
         projectId: process.env.PROJECT_ID,
@@ -59,7 +59,7 @@ describe("Text generation", () => {
     }, 5000);
 
     test("Stop with timeout", async () => {
-      const watsonXInstance = new WatsonX({
+      const watsonXInstance = new WatsonXLLM({
         version: "2024-05-31",
         serviceUrl: "sdadasdas" as string,
         projectId: process.env.PROJECT_ID,
@@ -73,7 +73,7 @@ describe("Text generation", () => {
     }, 5000);
 
     test("Signal in call options", async () => {
-      const watsonXInstance = new WatsonX({
+      const watsonXInstance = new WatsonXLLM({
         version: "2024-05-31",
         serviceUrl: process.env.API_URL as string,
         projectId: process.env.PROJECT_ID,
@@ -97,7 +97,7 @@ describe("Text generation", () => {
     }, 5000);
 
     test("Concurenccy", async () => {
-      const model = new WatsonX({
+      const model = new WatsonXLLM({
         maxConcurrency: 1,
         version: "2024-05-31",
         serviceUrl: process.env.API_URL as string,
@@ -116,7 +116,7 @@ describe("Text generation", () => {
           generated_token_count: 0,
           input_token_count: 0,
         };
-        const model = new WatsonX({
+        const model = new WatsonXLLM({
           maxConcurrency: 1,
           version: "2024-05-31",
           max_new_tokens: 1,
@@ -147,7 +147,7 @@ describe("Text generation", () => {
       let countedTokens = 0;
       let streamedText = "";
       let usedTokens = 0;
-      const model = new WatsonX({
+      const model = new WatsonXLLM({
         version: "2024-05-31",
         serviceUrl: process.env.API_URL as string,
         projectId: process.env.PROJECT_ID,
@@ -173,7 +173,7 @@ describe("Text generation", () => {
 
   describe("Test generate methods", () => {
     test("Basic usage", async () => {
-      const model = new WatsonX({
+      const model = new WatsonXLLM({
         version: "2024-05-31",
         serviceUrl: process.env.API_URL as string,
         projectId: process.env.PROJECT_ID,
@@ -187,7 +187,7 @@ describe("Text generation", () => {
     });
 
     test("Stop", async () => {
-      const model = new WatsonX({
+      const model = new WatsonXLLM({
         version: "2024-05-31",
         serviceUrl: process.env.API_URL as string,
         projectId: process.env.PROJECT_ID,
@@ -210,7 +210,7 @@ describe("Text generation", () => {
     test("Streaming mode with multiple prompts", async () => {
       let nrNewTokens = [0, 0, 0];
       const completions = ["", "", ""];
-      const model = new WatsonX({
+      const model = new WatsonXLLM({
         version: "2024-05-31",
         serviceUrl: process.env.API_URL as string,
         projectId: process.env.PROJECT_ID,
@@ -240,7 +240,7 @@ describe("Text generation", () => {
     });
 
     test("Prompt value", async () => {
-      const model = new WatsonX({
+      const model = new WatsonXLLM({
         version: "2024-05-31",
         serviceUrl: process.env.API_URL as string,
         projectId: process.env.PROJECT_ID,
@@ -259,7 +259,7 @@ describe("Text generation", () => {
     test("Basic usage", async () => {
       let countedTokens = 0;
       let streamedText = "";
-      const model = new WatsonX({
+      const model = new WatsonXLLM({
         version: "2024-05-31",
         serviceUrl: process.env.API_URL as string,
         projectId: process.env.PROJECT_ID,
@@ -281,7 +281,7 @@ describe("Text generation", () => {
     });
 
     test("Stop", async () => {
-      const model = new WatsonX({
+      const model = new WatsonXLLM({
         version: "2024-05-31",
         serviceUrl: process.env.API_URL as string,
         projectId: process.env.PROJECT_ID,
@@ -299,7 +299,7 @@ describe("Text generation", () => {
     });
 
     test("Timeout", async () => {
-      const model = new WatsonX({
+      const model = new WatsonXLLM({
         version: "2024-05-31",
         serviceUrl: process.env.API_URL as string,
         projectId: process.env.PROJECT_ID,
@@ -320,7 +320,7 @@ describe("Text generation", () => {
     });
 
     test("Signal in call options", async () => {
-      const model = new WatsonX({
+      const model = new WatsonXLLM({
         version: "2024-05-31",
         serviceUrl: process.env.API_URL as string,
         projectId: process.env.PROJECT_ID,
@@ -354,7 +354,7 @@ describe("Text generation", () => {
         serviceUrl: process.env.API_URL as string,
         projectId: process.env.PROJECT_ID,
       };
-      const instance = new WatsonX({
+      const instance = new WatsonXLLM({
         ...testProps,
       });
       expect(instance.getNumTokens("Hello")).resolves.toBeGreaterThanOrEqual(0);
@@ -370,7 +370,7 @@ describe("Text generation", () => {
         projectId: process.env.PROJECT_ID,
         maxRetries: 3,
       };
-      const instance = new WatsonX({
+      const instance = new WatsonXLLM({
         ...testProps,
       });
 

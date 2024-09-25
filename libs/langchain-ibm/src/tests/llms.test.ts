@@ -1,4 +1,4 @@
-import { WatsonX, WatsonXInputLLM } from "../llms.js";
+import { WatsonXLLM, WatsonXInputLLM } from "../llms.js";
 import { authenticateAndSetInstance } from "../utilis/authentication.js";
 import WatsonxAiMlVml_v1 from "@ibm-cloud/watsonx-ai/dist/watsonx-ai-ml/vml_v1.js";
 import { testProperties } from "./utilis.js";
@@ -19,7 +19,7 @@ describe("LLM unit tests", () => {
         serviceUrl: process.env.API_URL as string,
         projectId: process.env.PROJECT_ID,
       };
-      const instance = new WatsonX(testProps);
+      const instance = new WatsonXLLM(testProps);
       testProperties(instance, testProps);
     });
 
@@ -29,7 +29,7 @@ describe("LLM unit tests", () => {
         serviceUrl: process.env.API_URL as string,
         projectId: process.env.PROJECT_ID,
       };
-      const instance = new WatsonX({
+      const instance = new WatsonXLLM({
         ...testProps,
       });
       expect(instance.getNumTokens).toBeDefined();
@@ -69,7 +69,7 @@ describe("LLM unit tests", () => {
         maxRetries: 3,
         maxConcurrency: 3,
       };
-      const instance = new WatsonX(testProps);
+      const instance = new WatsonXLLM(testProps);
 
       testProperties(instance, testProps);
     });
@@ -83,7 +83,7 @@ describe("LLM unit tests", () => {
       };
       expect(
         () =>
-          new WatsonX({
+          new WatsonXLLM({
             ...testProps,
           })
       ).toThrowError();
@@ -96,7 +96,7 @@ describe("LLM unit tests", () => {
       };
       expect(
         () =>
-          new WatsonX({
+          new WatsonXLLM({
             ...testPropsProjectId,
           })
       ).toThrowError();
@@ -106,7 +106,7 @@ describe("LLM unit tests", () => {
       };
       expect(
         () =>
-          new WatsonX({
+          new WatsonXLLM({
             ...testPropsServiceUrl,
           })
       ).toThrowError();
@@ -115,7 +115,7 @@ describe("LLM unit tests", () => {
       };
       expect(
         () =>
-          new WatsonX({
+          new WatsonXLLM({
             // @ts-ignore
             testPropsVersion,
           })
@@ -131,7 +131,7 @@ describe("LLM unit tests", () => {
       };
       expect(
         () =>
-          new WatsonX({
+          new WatsonXLLM({
             ...testProps,
           })
       ).toThrowError();
@@ -149,7 +149,7 @@ describe("LLM unit tests", () => {
           notExProp: 12,
         },
       };
-      const instance = new WatsonX({ ...testProps, ...notExTestProps });
+      const instance = new WatsonXLLM({ ...testProps, ...notExTestProps });
       testProperties(instance, testProps, notExTestProps);
     });
   });

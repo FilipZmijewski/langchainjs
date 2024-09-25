@@ -54,7 +54,9 @@ export interface WatsonXInputLLM
 /**
  * Integration with an LLM.
  */
-export class WatsonX<CallOptions extends WatsonXCallOptionsLLM = WatsonXCallOptionsLLM>
+export class WatsonXLLM<
+    CallOptions extends WatsonXCallOptionsLLM = WatsonXCallOptionsLLM
+  >
   extends BaseLLM<CallOptions>
   implements WatsonXInputLLM
 {
@@ -67,9 +69,9 @@ export class WatsonX<CallOptions extends WatsonXCallOptionsLLM = WatsonXCallOpti
   streaming = false;
   modelId = "ibm/granite-13b-chat-v2";
   maxRetries = 0;
+  version = "2024-05-31";
 
   serviceUrl: string;
-  version: string;
   max_new_tokens?: number;
   spaceId?: string;
   projectId?: string;
@@ -216,6 +218,16 @@ export class WatsonX<CallOptions extends WatsonXCallOptionsLLM = WatsonXCallOpti
     else return { spaceId: this.spaceId, modelId: this.modelId };
   }
 
+  async listModels() {
+    const listModelParams = {
+      filters: "function_text_generation",
+    };
+    const listModels = await this.completionWithRetry(() =>
+      this.service.listFoundationModelSpecs(listModelParams)
+    );
+    return listModels.result.resources?.map((item) => item.model_id);
+  }
+
   private async generateSingleMessage(
     input: string,
     options: this["ParsedCallOptions"],
@@ -253,7 +265,7 @@ export class WatsonX<CallOptions extends WatsonXCallOptionsLLM = WatsonXCallOpti
             idOrName: idOrName,
             ...requestOptions,
             parameters: {
-              ...this.invocationParams(options),
+              ...parameters,
               prompt_variables: {
                 input,
               },
@@ -261,7 +273,7 @@ export class WatsonX<CallOptions extends WatsonXCallOptionsLLM = WatsonXCallOpti
           })
         : await this.service.generateTextStream({
             input,
-            parameters: this.invocationParams(options),
+            parameters,
             ...this.scopeId(),
             ...requestOptions,
           });
@@ -281,8 +293,8 @@ export class WatsonX<CallOptions extends WatsonXCallOptionsLLM = WatsonXCallOpti
         : this.service.generateText({
             input,
             parameters,
-            ...requestOptions,
             ...this.scopeId(),
+            ...requestOptions,
           });
 
       try {
@@ -339,7 +351,6 @@ export class WatsonX<CallOptions extends WatsonXCallOptionsLLM = WatsonXCallOpti
       generated_token_count: 0,
       input_token_count: 0,
     };
-
     if (this.streaming) {
       const generations: Generation[][] = await Promise.all(
         prompts.map(async (prompt, promptIdx) => {

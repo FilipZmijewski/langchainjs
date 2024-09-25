@@ -1,10 +1,10 @@
-import { WatsonXEmbeddings, WatsonXEmbeddingsParams } from "../embeddings.js";
+import { WatsonXEmbeddings } from "../embeddings.js";
 import { testProperties } from "./utilis.js";
 
 describe("Embeddings unit tests", () => {
   describe("Positive tests", () => {
     test("Basic properties", () => {
-      const testProps: WatsonXEmbeddingsParams = {
+      const testProps = {
         version: "2024-05-31",
         serviceUrl: process.env.API_URL as string,
         projectId: process.env.PROJECT_ID,
@@ -14,7 +14,7 @@ describe("Embeddings unit tests", () => {
     });
 
     test("Basic properties", () => {
-      const testProps: WatsonXEmbeddingsParams = {
+      const testProps = {
         version: "2024-05-31",
         serviceUrl: process.env.API_URL as string,
         projectId: process.env.PROJECT_ID,
@@ -31,7 +31,7 @@ describe("Embeddings unit tests", () => {
 
   describe("Negative tests", () => {
     test("Missing id", async () => {
-      const testProps: WatsonXEmbeddingsParams = {
+      const testProps = {
         version: "2024-05-31",
         serviceUrl: process.env.API_URL as string,
       };
@@ -77,7 +77,7 @@ describe("Embeddings unit tests", () => {
     });
 
     test("Passing more than one id", async () => {
-      const testProps: WatsonXEmbeddingsParams = {
+      const testProps = {
         version: "2024-05-31",
         serviceUrl: process.env.API_URL as string,
         projectId: process.env.PROJECT_ID,
@@ -92,7 +92,7 @@ describe("Embeddings unit tests", () => {
     });
 
     test("Invalid properties", () => {
-      const testProps: WatsonXEmbeddingsParams = {
+      const testProps = {
         version: "2024-05-31",
         serviceUrl: process.env.API_URL as string,
         projectId: process.env.PROJECT_ID,

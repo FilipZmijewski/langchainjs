@@ -22,6 +22,8 @@ export interface WatsonXParams extends WatsonXInit {
   spaceId?: string;
   projectId?: string;
   idOrName?: string;
+  maxConcurrency?: number;
+  maxRetries?: number;
 }
 
 export interface GenerationInfo {
