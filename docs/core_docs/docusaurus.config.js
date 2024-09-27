@@ -13,7 +13,7 @@ const mdxComponentsPath = path.resolve(__dirname, "docs", "mdx_components");
 const baseLightCodeBlockTheme = require("prism-react-renderer/themes/vsLight");
 const baseDarkCodeBlockTheme = require("prism-react-renderer/themes/vsDark");
 
-const baseUrl = "/v0.2/";
+const baseUrl = "/";
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
@@ -135,13 +135,6 @@ const config = {
   themeConfig:
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     ({
-      announcementBar: {
-        content:
-          'Share your thoughts on AI agents. <a target="_blank" href="https://langchain.typeform.com/state-of-agents">Take the 3-min survey</a>.',
-        isCloseable: true,
-        backgroundColor: "rgba(53, 151, 147, 0.1)",
-        textColor: "rgb(53, 151, 147)",
-      },
       prism: {
         theme: {
           ...baseLightCodeBlockTheme,
@@ -201,12 +194,16 @@ const config = {
           },
           {
             type: "dropdown",
-            label: "v0.2",
+            label: "v0.3",
             position: "right",
             items: [
               {
-                label: "v0.2",
+                label: "v0.3",
                 href: "/docs/introduction",
+              },
+              {
+                label: "v0.2",
+                href: "https://js.langchain.com/v0.2/docs/introduction",
               },
               {
                 label: "v0.1",
@@ -304,7 +301,7 @@ const config = {
         // this is linked to erick@langchain.dev currently
         apiKey: "180851bbb9ba0ef6be9214849d6efeaf",
 
-        indexName: "js-langchain-0.2",
+        indexName: "js-langchain-latest",
 
         contextualSearch: false,
       },
