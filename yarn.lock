@@ -22455,27 +22455,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"chromadb@npm:^1.9.2":
-  version: 1.9.2
-  resolution: "chromadb@npm:1.9.2"
-  dependencies:
-    cliui: ^8.0.1
-    isomorphic-fetch: ^3.0.0
-  peerDependencies:
-    "@google/generative-ai": ^0.1.1
-    cohere-ai: ^5.0.0 || ^6.0.0 || ^7.0.0
-    openai: ^3.0.0 || ^4.0.0
-  peerDependenciesMeta:
-    "@google/generative-ai":
-      optional: true
-    cohere-ai:
-      optional: true
-    openai:
-      optional: true
-  checksum: a6ed4d3e26d30e74d41bd520bc8e89f583085413655a9eb6f9419c6c491fe44484cfeb961944e32f3d88b3c4114d059e925666060677c6bae848b1405c45324a
-  languageName: node
-  linkType: hard
-
 "chrome-trace-event@npm:^1.0.2":
   version: 1.0.3
   resolution: "chrome-trace-event@npm:1.0.3"
@@ -32464,7 +32443,6 @@ __metadata:
     "@tsconfig/recommended": ^1.0.3
     "@typescript-eslint/eslint-plugin": ^6.12.0
     "@typescript-eslint/parser": ^6.12.0
-    chromadb: ^1.9.2
     concurrently: ^9.0.1
     dotenv: ^16.3.1
     dpdm: ^3.12.0
