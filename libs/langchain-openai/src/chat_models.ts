@@ -14,6 +14,7 @@ import {
   ToolMessageChunk,
   OpenAIToolCall,
   isAIMessage,
+  convertToChunk,
 } from "@langchain/core/messages";
 import {
   type ChatGeneration,
@@ -249,7 +250,8 @@ function _convertDeltaToMessageChunk(
   }
 }
 
-function convertMessagesToOpenAIParams(messages: BaseMessage[]) {
+// Used in LangSmith, export is important here
+export function _convertMessagesToOpenAIParams(messages: BaseMessage[]) {
   // TODO: Function messages do not support array content, fix cast
   return messages.map((message) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -1185,8 +1187,21 @@ export class ChatOpenAI<
     options: this["ParsedCallOptions"],
     runManager?: CallbackManagerForLLMRun
   ): AsyncGenerator<ChatGenerationChunk> {
+    if (this.model.includes("o1-")) {
+      console.warn(
+        "[WARNING]: OpenAI o1 models do not yet support token-level streaming. Streaming will yield single chunk."
+      );
+      const result = await this._generate(messages, options, runManager);
+      const messageChunk = convertToChunk(result.generations[0].message);
+      yield new ChatGenerationChunk({
+        message: messageChunk,
+        text:
+          typeof messageChunk.content === "string" ? messageChunk.content : "",
+      });
+      return;
+    }
     const messagesMapped: OpenAICompletionParam[] =
-      convertMessagesToOpenAIParams(messages);
+      _convertMessagesToOpenAIParams(messages);
     const params = {
       ...this.invocationParams(options, {
         streaming: true,
@@ -1315,7 +1330,7 @@ export class ChatOpenAI<
     const tokenUsage: TokenUsage = {};
     const params = this.invocationParams(options);
     const messagesMapped: OpenAICompletionParam[] =
-      convertMessagesToOpenAIParams(messages);
+      _convertMessagesToOpenAIParams(messages);
 
     if (params.stream) {
       const stream = this._streamResponseChunks(messages, options, runManager);
