@@ -33,9 +33,7 @@
   "license": "MIT",
   "dependencies": {
     "@ibm-cloud/watsonx-ai": "1.0.1",
-    "@langchain/community": "workspace:^",
     "@langchain/core": ">0.1.0 <0.3.0",
-    "chromadb": "^1.9.2",
     "ibm-cloud-sdk-core": "^5.0.2"
   },
   "devDependencies": {
