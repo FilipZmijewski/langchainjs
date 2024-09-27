@@ -1,12 +1,13 @@
-import { WatsonXEmbeddings, WatsonXEmbeddingsParams } from "../embeddings.js";
-import { WatsonXInputLLM, WatsonXLLM } from "../llms.js";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { WatsonxEmbeddings, WatsonxEmbeddingsParams } from "../embeddings.js";
+import { WatsonxInputLLM, WatsonxLLM } from "../llms.js";
 
 export function getKey<K>(key: K): K {
   return key;
 }
 export const testProperties = (
-  instance: WatsonXLLM | WatsonXEmbeddings,
-  testProps: WatsonXInputLLM,
+  instance: WatsonxLLM | WatsonxEmbeddings,
+  testProps: WatsonxInputLLM,
   notExTestProps?: { [key: string]: any }
 ) => {
   const checkProperty = <T extends { [key: string]: any }>(
@@ -17,18 +18,17 @@ export const testProperties = (
     Object.keys(testProps).forEach((key) => {
       const keys = getKey<keyof T>(key);
       type Type = Pick<T, typeof keys>;
-      typeof testProps[key as keyof T] === "object"
-        ? checkProperty<Type>(
-            testProps[key as keyof T],
-            instance[key],
-            existing
-          )
-        : existing
-        ? expect(instance[key as keyof T]).toBe(testProps[key as keyof T])
-        : instance && expect(instance[key as keyof T]).toBeUndefined();
+
+      if (typeof testProps[key as keyof T] === "object")
+        checkProperty<Type>(testProps[key as keyof T], instance[key], existing);
+      else {
+        if (existing)
+          expect(instance[key as keyof T]).toBe(testProps[key as keyof T]);
+        else if (instance) expect(instance[key as keyof T]).toBeUndefined();
+      }
     });
   };
-  checkProperty<WatsonXEmbeddingsParams>(testProps, instance);
-  notExTestProps &&
+  checkProperty<WatsonxEmbeddingsParams>(testProps, instance);
+  if (notExTestProps)
     checkProperty<typeof notExTestProps>(notExTestProps, instance, false);
 };

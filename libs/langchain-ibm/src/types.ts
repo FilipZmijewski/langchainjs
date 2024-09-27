@@ -2,7 +2,7 @@ export interface TokenUsage {
   generated_token_count: number;
   input_token_count: number;
 }
-export interface WatsonXAuth {
+export interface WatsonxAuth {
   watsonxAIApikey?: string;
   watsonxAIBearerToken?: string;
   watsonxAIUsername?: string;
@@ -11,13 +11,13 @@ export interface WatsonXAuth {
   watsonxAIAuthType?: string;
 }
 
-export interface WatsonXInit {
+export interface WatsonxInit {
   authenticator?: string;
   serviceUrl: string;
   version: string;
 }
 
-export interface WatsonXParams extends WatsonXInit {
+export interface WatsonxParams extends WatsonxInit {
   modelId?: string;
   spaceId?: string;
   projectId?: string;

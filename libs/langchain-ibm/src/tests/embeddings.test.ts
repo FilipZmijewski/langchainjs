@@ -1,4 +1,5 @@
-import { WatsonXEmbeddings } from "../embeddings.js";
+/* eslint-disable no-process-env */
+import { WatsonxEmbeddings } from "../embeddings.js";
 import { testProperties } from "./utilis.js";
 
 describe("Embeddings unit tests", () => {
@@ -9,7 +10,7 @@ describe("Embeddings unit tests", () => {
         serviceUrl: process.env.API_URL as string,
         projectId: process.env.PROJECT_ID,
       };
-      const instance = new WatsonXEmbeddings(testProps);
+      const instance = new WatsonxEmbeddings(testProps);
       testProperties(instance, testProps);
     });
 
@@ -23,7 +24,7 @@ describe("Embeddings unit tests", () => {
         maxRetries: 2,
         modelId: "ibm/slate-125m-english-rtrvr",
       };
-      const instance = new WatsonXEmbeddings(testProps);
+      const instance = new WatsonxEmbeddings(testProps);
 
       testProperties(instance, testProps);
     });
@@ -37,30 +38,30 @@ describe("Embeddings unit tests", () => {
       };
       expect(
         () =>
-          new WatsonXEmbeddings({
+          new WatsonxEmbeddings({
             ...testProps,
           })
       ).toThrowError();
     });
 
     test("Missing other props", async () => {
-      // @ts-ignore
-      const testPropsProjectId: WatsonXInputLLM = {
+      // @ts-expect-error Intentionally passing wrong value
+      const testPropsProjectId: WatsonxInputLLM = {
         projectId: process.env.PROJECT_ID,
       };
       expect(
         () =>
-          new WatsonXEmbeddings({
+          new WatsonxEmbeddings({
             ...testPropsProjectId,
           })
       ).toThrowError();
-      // @ts-ignore
-      const testPropsServiceUrl: WatsonXInputLLM = {
+      // @ts-expect-error //Intentionally passing wrong value
+      const testPropsServiceUrl: WatsonxInputLLM = {
         serviceUrl: process.env.API_URL as string,
       };
       expect(
         () =>
-          new WatsonXEmbeddings({
+          new WatsonxEmbeddings({
             ...testPropsServiceUrl,
           })
       ).toThrowError();
@@ -69,8 +70,8 @@ describe("Embeddings unit tests", () => {
       };
       expect(
         () =>
-          new WatsonXEmbeddings({
-            // @ts-ignore
+          new WatsonxEmbeddings({
+            // @ts-expect-error Intentionally passing wrong props
             testPropsVersion,
           })
       ).toThrowError();
@@ -85,7 +86,7 @@ describe("Embeddings unit tests", () => {
       };
       expect(
         () =>
-          new WatsonXEmbeddings({
+          new WatsonxEmbeddings({
             ...testProps,
           })
       ).toThrowError();
@@ -103,7 +104,7 @@ describe("Embeddings unit tests", () => {
           notExProp: 12,
         },
       };
-      const instance = new WatsonXEmbeddings({
+      const instance = new WatsonxEmbeddings({
         ...testProps,
         ...notExTestProps,
       });

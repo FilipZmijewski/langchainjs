@@ -1,9 +1,10 @@
+/* eslint-disable no-process-env */
 import { test } from "@jest/globals";
-import { WatsonXEmbeddings } from "../embeddings.js";
+import { WatsonxEmbeddings } from "../embeddings.js";
 
 describe("Test embeddings", () => {
   test("embedQuery method", async () => {
-    const embeddings = new WatsonXEmbeddings({
+    const embeddings = new WatsonxEmbeddings({
       version: "2024-05-31",
       serviceUrl: process.env.API_URL as string,
       projectId: process.env.PROJECT_ID,
@@ -13,7 +14,7 @@ describe("Test embeddings", () => {
   });
 
   test("embedDocuments", async () => {
-    const embeddings = new WatsonXEmbeddings({
+    const embeddings = new WatsonxEmbeddings({
       version: "2024-05-31",
       serviceUrl: process.env.API_URL as string,
       projectId: process.env.PROJECT_ID,
@@ -25,7 +26,7 @@ describe("Test embeddings", () => {
   });
 
   test("Concurrency", async () => {
-    const embeddings = new WatsonXEmbeddings({
+    const embeddings = new WatsonxEmbeddings({
       version: "2024-05-31",
       serviceUrl: process.env.API_URL as string,
       projectId: process.env.PROJECT_ID,
@@ -48,7 +49,7 @@ describe("Test embeddings", () => {
   });
 
   test("List models", async () => {
-    const embeddings = new WatsonXEmbeddings({
+    const embeddings = new WatsonxEmbeddings({
       version: "2024-05-31",
       serviceUrl: process.env.API_URL as string,
       projectId: process.env.PROJECT_ID,
@@ -56,7 +57,6 @@ describe("Test embeddings", () => {
     });
     const res = await embeddings.listModels();
     expect(res?.length).toBeGreaterThan(0);
-    //@ts-expect-error
-    expect(typeof res[0]).toBe("string");
+    if (res) expect(typeof res[0]).toBe("string");
   });
 });

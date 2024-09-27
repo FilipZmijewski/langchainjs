@@ -10355,14 +10355,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@ibm-cloud/watsonx-ai@npm:^1.0.2":
-  version: 1.0.2
-  resolution: "@ibm-cloud/watsonx-ai@npm:1.0.2"
+"@ibm-cloud/watsonx-ai@npm:1.0.1":
+  version: 1.0.1
+  resolution: "@ibm-cloud/watsonx-ai@npm:1.0.1"
   dependencies:
     "@types/node": ^12.0.8
     extend: 3.0.2
     ibm-cloud-sdk-core: ^4.2.5
-  checksum: 46744d429657872d2d5b0842564dabd5ff06aa1d27554bd44b240f8db0f4bdd8131cb53e979c115f771862922877cf135d6f858eb36929ac556f9a7f1e7eaa89
+  checksum: 843aa748f2568e5850df7718c38897dd668bc560426a339974cbd481ddf04579a54d661aa16b84d29c2b4d8aab0925ca3fbe78c31beb82e7cdc9ca02bd7a4e07
   languageName: node
   linkType: hard
 
@@ -11189,7 +11189,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@langchain/community@workspace:*, @langchain/community@workspace:libs/langchain-community":
+"@langchain/community@workspace:*, @langchain/community@workspace:^, @langchain/community@workspace:libs/langchain-community":
   version: 0.0.0-use.local
   resolution: "@langchain/community@workspace:libs/langchain-community"
   dependencies:
@@ -21166,6 +21166,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"axios@npm:1.7.4":
+  version: 1.7.4
+  resolution: "axios@npm:1.7.4"
+  dependencies:
+    follow-redirects: ^1.15.6
+    form-data: ^4.0.0
+    proxy-from-env: ^1.1.0
+  checksum: 0c17039a9acfe6a566fca8431ba5c1b455c83d30ea6157fec68a6722878fcd30f3bd32d172f6bee0c51fe75ca98e6414ddcd968a87b5606b573731629440bfaf
+  languageName: node
+  linkType: hard
+
 "axios@npm:^0.25.0":
   version: 0.25.0
   resolution: "axios@npm:0.25.0"
@@ -22441,6 +22452,27 @@ __metadata:
     openai:
       optional: true
   checksum: 9903891ee5811ec5a50d9c94057ea54d8f09d528749478f6ce1cbed4831544788f96d2c1301f7c3453f4ac5a2dd38380f1383686003d80a09e4e7dbc0d8b11f5
+  languageName: node
+  linkType: hard
+
+"chromadb@npm:^1.9.2":
+  version: 1.9.2
+  resolution: "chromadb@npm:1.9.2"
+  dependencies:
+    cliui: ^8.0.1
+    isomorphic-fetch: ^3.0.0
+  peerDependencies:
+    "@google/generative-ai": ^0.1.1
+    cohere-ai: ^5.0.0 || ^6.0.0 || ^7.0.0
+    openai: ^3.0.0 || ^4.0.0
+  peerDependenciesMeta:
+    "@google/generative-ai":
+      optional: true
+    cohere-ai:
+      optional: true
+    openai:
+      optional: true
+  checksum: a6ed4d3e26d30e74d41bd520bc8e89f583085413655a9eb6f9419c6c491fe44484cfeb961944e32f3d88b3c4114d059e925666060677c6bae848b1405c45324a
   languageName: node
   linkType: hard
 
@@ -29808,6 +29840,29 @@ __metadata:
   languageName: node
   linkType: hard
 
+"ibm-cloud-sdk-core@npm:^5.0.2":
+  version: 5.0.2
+  resolution: "ibm-cloud-sdk-core@npm:5.0.2"
+  dependencies:
+    "@types/debug": ^4.1.12
+    "@types/node": ~10.14.19
+    "@types/tough-cookie": ^4.0.0
+    axios: 1.7.4
+    camelcase: ^6.3.0
+    debug: ^4.3.4
+    dotenv: ^16.4.5
+    extend: 3.0.2
+    file-type: 16.5.4
+    form-data: 4.0.0
+    isstream: 0.1.2
+    jsonwebtoken: ^9.0.2
+    mime-types: 2.1.35
+    retry-axios: ^2.6.0
+    tough-cookie: ^4.1.3
+  checksum: fed92b851f816cbe94f4f28c6b45eed3b214f570897ed9936e5b7fd332b8c25c599f49d96866b9d936499b39a65e4d9db5a3191940b5a2489656e966e8fa6526
+  languageName: node
+  linkType: hard
+
 "iconv-lite@npm:0.4, iconv-lite@npm:0.4.24, iconv-lite@npm:^0.4.18, iconv-lite@npm:^0.4.24":
   version: 0.4.24
   resolution: "iconv-lite@npm:0.4.24"
@@ -32399,8 +32454,9 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "langchain-ibm@workspace:libs/langchain-ibm"
   dependencies:
-    "@ibm-cloud/watsonx-ai": ^1.0.2
+    "@ibm-cloud/watsonx-ai": 1.0.1
     "@jest/globals": ^29.5.0
+    "@langchain/community": "workspace:^"
     "@langchain/core": ">0.1.0 <0.3.0"
     "@langchain/scripts": ">=0.1.0 <0.2.0"
     "@swc/core": ^1.3.90
@@ -32408,6 +32464,7 @@ __metadata:
     "@tsconfig/recommended": ^1.0.3
     "@typescript-eslint/eslint-plugin": ^6.12.0
     "@typescript-eslint/parser": ^6.12.0
+    chromadb: ^1.9.2
     concurrently: ^9.0.1
     dotenv: ^16.3.1
     dpdm: ^3.12.0
@@ -32417,6 +32474,7 @@ __metadata:
     eslint-plugin-import: ^2.27.5
     eslint-plugin-no-instanceof: ^1.0.1
     eslint-plugin-prettier: ^4.2.1
+    ibm-cloud-sdk-core: ^5.0.2
     jest: ^29.5.0
     jest-environment-node: ^29.6.4
     nodemon: ^3.1.4

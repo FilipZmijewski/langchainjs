@@ -1,32 +1,40 @@
 import { Embeddings } from "@langchain/core/embeddings";
-import { WatsonXAuth, WatsonXParams } from "./types.js";
 import {
   EmbeddingParameters,
   TextEmbeddingsParams,
 } from "@ibm-cloud/watsonx-ai/dist/watsonx-ai-ml/vml_v1.js";
 import { WatsonXAI } from "@ibm-cloud/watsonx-ai";
-import { authenticateAndSetInstance } from "./utilis/authentication.js";
 import { AsyncCaller } from "@langchain/core/utils/async_caller";
+import { authenticateAndSetInstance } from "./utilis/authentication.js";
+import { WatsonxAuth, WatsonxParams } from "./types.js";
 
-export interface WatsonXEmbeddingsParams
+export interface WatsonxEmbeddingsParams
   extends Omit<EmbeddingParameters, "return_options">,
     Pick<TextEmbeddingsParams, "headers"> {}
 
-export class WatsonXEmbeddings
+export class WatsonxEmbeddings
   extends Embeddings
-  implements WatsonXEmbeddingsParams, WatsonXParams
+  implements WatsonxEmbeddingsParams, WatsonxParams
 {
   modelId = "ibm/slate-125m-english-rtrvr";
-  serviceUrl: string;
-  version: string;
-  spaceId?: string;
-  projectId?: string;
-  truncate_input_tokens?: number;
-  maxRetries?: number;
-  maxConcurrency?: number;
-  private serviceInstance: WatsonXAI;
 
-  constructor(fields: WatsonXEmbeddingsParams & WatsonXAuth & WatsonXParams) {
+  serviceUrl: string;
+
+  version: string;
+
+  spaceId?: string;
+
+  projectId?: string;
+
+  truncate_input_tokens?: number;
+
+  maxRetries?: number;
+
+  maxConcurrency?: number;
+
+  private service: WatsonXAI;
+
+  constructor(fields: WatsonxEmbeddingsParams & WatsonxAuth & WatsonxParams) {
     const superProps = { maxConcurrency: 2, ...fields };
     super(superProps);
     this.modelId = fields?.modelId ? fields.modelId : this.modelId;
@@ -44,8 +52,30 @@ export class WatsonXEmbeddings
     this.projectId = fields?.projectId;
     this.spaceId = fields?.spaceId;
     this.serviceUrl = fields?.serviceUrl;
-    this.serviceInstance = authenticateAndSetInstance(fields);
+    const {
+      watsonxAIApikey,
+      watsonxAIAuthType,
+      watsonxAIBearerToken,
+      watsonxAIUsername,
+      watsonxAIPassword,
+      watsonxAIUrl,
+      version,
+      serviceUrl,
+    } = fields;
+    const auth = authenticateAndSetInstance({
+      watsonxAIApikey,
+      watsonxAIAuthType,
+      watsonxAIBearerToken,
+      watsonxAIUsername,
+      watsonxAIPassword,
+      watsonxAIUrl,
+      version,
+      serviceUrl,
+    });
+    if (auth) this.service = auth;
+    else throw new Error("You have not provided one type of authentication");
   }
+
   scopeId() {
     if (this.projectId) return { projectId: this.projectId };
     else return { spaceId: this.spaceId };
@@ -70,7 +100,7 @@ export class WatsonXEmbeddings
       filters: "function_embedding",
     };
     const listModels = await this.completionWithRetry(() =>
-      this.serviceInstance.listFoundationModelSpecs(listModelParams)
+      this.service.listFoundationModelSpecs(listModelParams)
     );
     return listModels.result.resources?.map((item) => item.model_id);
   }
@@ -84,7 +114,7 @@ export class WatsonXEmbeddings
     };
 
     const embeddings = await this.completionWithRetry(() =>
-      this.serviceInstance.embedText(textEmbeddingParams)
+      this.service.embedText(textEmbeddingParams)
     );
     return embeddings.result.results.map((item) => item.embedding);
   }
@@ -93,6 +123,7 @@ export class WatsonXEmbeddings
     const data = await this.embedSingleText(documents);
     return data;
   }
+
   async embedQuery(document: string): Promise<number[]> {
     const data = await this.embedSingleText([document]);
     return data[0];

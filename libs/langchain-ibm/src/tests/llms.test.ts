@@ -1,6 +1,7 @@
-import { WatsonXLLM, WatsonXInputLLM } from "../llms.js";
-import { authenticateAndSetInstance } from "../utilis/authentication.js";
+/* eslint-disable no-process-env */
 import WatsonxAiMlVml_v1 from "@ibm-cloud/watsonx-ai/dist/watsonx-ai-ml/vml_v1.js";
+import { WatsonxLLM, WatsonxInputLLM } from "../llms.js";
+import { authenticateAndSetInstance } from "../utilis/authentication.js";
 import { testProperties } from "./utilis.js";
 
 describe("LLM unit tests", () => {
@@ -14,22 +15,23 @@ describe("LLM unit tests", () => {
     });
 
     test("Test basic properties after init", async () => {
-      const testProps: WatsonXInputLLM = {
+      const testProps: WatsonxInputLLM = {
         version: "2024-05-31",
         serviceUrl: process.env.API_URL as string,
         projectId: process.env.PROJECT_ID,
       };
-      const instance = new WatsonXLLM(testProps);
+      const instance = new WatsonxLLM(testProps);
+
       testProperties(instance, testProps);
     });
 
     test("Test methods after init", () => {
-      const testProps: WatsonXInputLLM = {
+      const testProps: WatsonxInputLLM = {
         version: "2024-05-31",
         serviceUrl: process.env.API_URL as string,
         projectId: process.env.PROJECT_ID,
       };
-      const instance = new WatsonXLLM({
+      const instance = new WatsonxLLM({
         ...testProps,
       });
       expect(instance.getNumTokens).toBeDefined();
@@ -69,7 +71,7 @@ describe("LLM unit tests", () => {
         maxRetries: 3,
         maxConcurrency: 3,
       };
-      const instance = new WatsonXLLM(testProps);
+      const instance = new WatsonxLLM(testProps);
 
       testProperties(instance, testProps);
     });
@@ -77,36 +79,36 @@ describe("LLM unit tests", () => {
 
   describe("Negative tests", () => {
     test("Missing id", async () => {
-      const testProps: WatsonXInputLLM = {
+      const testProps: WatsonxInputLLM = {
         version: "2024-05-31",
         serviceUrl: process.env.API_URL as string,
       };
       expect(
         () =>
-          new WatsonXLLM({
+          new WatsonxLLM({
             ...testProps,
           })
       ).toThrowError();
     });
 
     test("Missing other props", async () => {
-      // @ts-ignore
-      const testPropsProjectId: WatsonXInputLLM = {
+      // @ts-expect-error Intentionally passing not enough parameters
+      const testPropsProjectId: WatsonxInputLLM = {
         projectId: process.env.PROJECT_ID,
       };
       expect(
         () =>
-          new WatsonXLLM({
+          new WatsonxLLM({
             ...testPropsProjectId,
           })
       ).toThrowError();
-      // @ts-ignore
-      const testPropsServiceUrl: WatsonXInputLLM = {
+      // @ts-expect-error Intentionally passing not enough parameters
+      const testPropsServiceUrl: WatsonxInputLLM = {
         serviceUrl: process.env.API_URL as string,
       };
       expect(
         () =>
-          new WatsonXLLM({
+          new WatsonxLLM({
             ...testPropsServiceUrl,
           })
       ).toThrowError();
@@ -115,15 +117,15 @@ describe("LLM unit tests", () => {
       };
       expect(
         () =>
-          new WatsonXLLM({
-            // @ts-ignore
+          new WatsonxLLM({
+            // @ts-expect-error Intentionally passing wrong type of an object
             testPropsVersion,
           })
       ).toThrowError();
     });
 
     test("Passing more than one id", async () => {
-      const testProps: WatsonXInputLLM = {
+      const testProps: WatsonxInputLLM = {
         version: "2024-05-31",
         serviceUrl: process.env.API_URL as string,
         projectId: process.env.PROJECT_ID,
@@ -131,7 +133,7 @@ describe("LLM unit tests", () => {
       };
       expect(
         () =>
-          new WatsonXLLM({
+          new WatsonxLLM({
             ...testProps,
           })
       ).toThrowError();
@@ -149,7 +151,7 @@ describe("LLM unit tests", () => {
           notExProp: 12,
         },
       };
-      const instance = new WatsonXLLM({ ...testProps, ...notExTestProps });
+      const instance = new WatsonxLLM({ ...testProps, ...notExTestProps });
       testProperties(instance, testProps, notExTestProps);
     });
   });

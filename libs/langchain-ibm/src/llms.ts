@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { CallbackManagerForLLMRun } from "@langchain/core/callbacks/manager";
 import { BaseLLM, BaseLLMParams } from "@langchain/core/language_models/llms";
 import { WatsonXAI } from "@ibm-cloud/watsonx-ai";
@@ -13,24 +14,27 @@ import {
   TextTokenizationParams,
   TextTokenizeParameters,
 } from "@ibm-cloud/watsonx-ai/dist/watsonx-ai-ml/vml_v1.js";
-import { Generation, LLMResult } from "@langchain/core/outputs";
-import { GenerationChunk } from "@langchain/core/outputs";
+import {
+  Generation,
+  LLMResult,
+  GenerationChunk,
+} from "@langchain/core/outputs";
+import { BaseLanguageModelCallOptions } from "@langchain/core/language_models/base";
+import { AsyncCaller } from "@langchain/core/utils/async_caller";
 import { authenticateAndSetInstance } from "./utilis/authentication.js";
 import {
   GenerationInfo,
   ResponseChunk,
   TokenUsage,
-  WatsonXAuth,
-  WatsonXParams,
+  WatsonxAuth,
+  WatsonxParams,
 } from "./types.js";
-import { BaseLanguageModelCallOptions } from "@langchain/core/language_models/base";
-import { AsyncCaller } from "@langchain/core/utils/async_caller";
 
 /**
  * Input to LLM class.
  */
 
-export interface WatsonXCallOptionsLLM
+export interface WatsonxCallOptionsLLM
   extends BaseLanguageModelCallOptions,
     Omit<
       Partial<
@@ -44,9 +48,9 @@ export interface WatsonXCallOptionsLLM
   maxRetries?: number;
 }
 
-export interface WatsonXInputLLM
+export interface WatsonxInputLLM
   extends TextGenParameters,
-    WatsonXParams,
+    WatsonxParams,
     BaseLLMParams {
   streaming?: boolean;
 }
@@ -54,46 +58,68 @@ export interface WatsonXInputLLM
 /**
  * Integration with an LLM.
  */
-export class WatsonXLLM<
-    CallOptions extends WatsonXCallOptionsLLM = WatsonXCallOptionsLLM
+export class WatsonxLLM<
+    CallOptions extends WatsonxCallOptionsLLM = WatsonxCallOptionsLLM
   >
   extends BaseLLM<CallOptions>
-  implements WatsonXInputLLM
+  implements WatsonxInputLLM
 {
   // Used for tracing, replace with the same name as your class
   static lc_name() {
-    return "WatsonX";
+    return "Watsonx";
   }
 
   lc_serializable = true;
+
   streaming = false;
+
   modelId = "ibm/granite-13b-chat-v2";
+
   maxRetries = 0;
+
   version = "2024-05-31";
 
   serviceUrl: string;
+
   max_new_tokens?: number;
+
   spaceId?: string;
+
   projectId?: string;
+
   idOrName?: string;
+
   decoding_method?: TextGenParameters.Constants.DecodingMethod | string;
+
   length_penalty?: TextGenLengthPenalty;
+
   min_new_tokens?: number;
+
   random_seed?: number;
+
   stop_sequences?: string[];
+
   temperature?: number;
+
   time_limit?: number;
+
   top_k?: number;
+
   top_p?: number;
+
   repetition_penalty?: number;
+
   truncate_input_tokens?: number;
+
   return_options?: ReturnOptionProperties;
+
   include_stop_sequence?: boolean;
+
   maxConcurrency?: number;
 
   private service: WatsonXAI;
 
-  constructor(fields: WatsonXInputLLM & WatsonXAuth) {
+  constructor(fields: WatsonxInputLLM & WatsonxAuth) {
     super(fields);
     this.modelId = fields.modelId ?? this.modelId;
     this.version = fields.version;
@@ -142,7 +168,7 @@ export class WatsonXLLM<
       serviceUrl,
     } = fields;
 
-    this.service = authenticateAndSetInstance({
+    const auth = authenticateAndSetInstance({
       watsonxAIApikey,
       watsonxAIAuthType,
       watsonxAIBearerToken,
@@ -152,6 +178,8 @@ export class WatsonXLLM<
       version,
       serviceUrl,
     });
+    if (auth) this.service = auth;
+    else throw new Error("You have not provided one type of authentication");
   }
 
   get lc_secrets(): { [key: string]: string } {
@@ -231,22 +259,19 @@ export class WatsonXLLM<
   private async generateSingleMessage(
     input: string,
     options: this["ParsedCallOptions"],
-    stream: true,
-    tokenUsage?: TokenUsage
+    stream: true
   ): Promise<AsyncIterable<string>>;
 
   private async generateSingleMessage(
     input: string,
     options: this["ParsedCallOptions"],
-    stream: false,
-    tokenUsage?: TokenUsage
+    stream: false
   ): Promise<Generation[]>;
 
   private async generateSingleMessage(
     input: string,
     options: this["ParsedCallOptions"],
-    stream: boolean,
-    tokenUsage = { generated_token_count: 0, input_token_count: 0 }
+    stream: boolean
   ) {
     const {
       signal,
@@ -256,13 +281,13 @@ export class WatsonXLLM<
       timeout,
       ...requestOptions
     } = options;
-
+    const tokenUsage = { generated_token_count: 0, input_token_count: 0 };
     const idOrName = options?.idOrName ?? this.idOrName;
     const parameters = this.invocationParams(options);
     if (stream) {
       const textStream = idOrName
         ? await this.service.deploymentGenerateTextStream({
-            idOrName: idOrName,
+            idOrName,
             ...requestOptions,
             parameters: {
               ...parameters,
@@ -277,7 +302,7 @@ export class WatsonXLLM<
             ...this.scopeId(),
             ...requestOptions,
           });
-      return textStream;
+      return textStream as unknown as AsyncIterable<string>;
     } else {
       const textGenerationPromise = idOrName
         ? this.service.deploymentGenerateText({
@@ -297,28 +322,26 @@ export class WatsonXLLM<
             ...requestOptions,
           });
 
-      try {
-        const textGeneration = await textGenerationPromise;
-        const singleGeneration: Generation[] =
-          textGeneration.result.results.map((result) => {
-            tokenUsage.generated_token_count += result.generated_token_count
-              ? result.generated_token_count
-              : 0;
-            tokenUsage.input_token_count += result.input_token_count
-              ? result.input_token_count
-              : 0;
-            return {
-              text: result.generated_text,
-              generationInfo: {
-                stop_reason: result.stop_reason,
-                ...tokenUsage,
-              },
-            };
-          });
-        return singleGeneration;
-      } catch (err) {
-        throw err;
-      }
+      const textGeneration = await textGenerationPromise;
+      const singleGeneration: Generation[] = textGeneration.result.results.map(
+        (result) => {
+          tokenUsage.generated_token_count += result.generated_token_count
+            ? result.generated_token_count
+            : 0;
+          tokenUsage.input_token_count += result.input_token_count
+            ? result.input_token_count
+            : 0;
+          return {
+            text: result.generated_text,
+            generationInfo: {
+              stop_reason: result.stop_reason,
+              input_token_count: result.input_token_count,
+              generated_token_count: result.generated_token_count,
+            },
+          };
+        }
+      );
+      return singleGeneration;
     }
   }
 
@@ -358,7 +381,7 @@ export class WatsonXLLM<
             throw new Error("AbortError");
           }
           const callback = () =>
-            this.generateSingleMessage(prompt, options, true, tokenUsage);
+            this.generateSingleMessage(prompt, options, true);
 
           type ReturnMessage = ReturnType<typeof callback>;
           const stream = await this.completionWithRetry<ReturnMessage>(
@@ -439,16 +462,31 @@ export class WatsonXLLM<
           }
 
           const callback = () =>
-            this.generateSingleMessage(prompt, options, false, tokenUsage);
+            this.generateSingleMessage(prompt, options, false);
           type ReturnMessage = ReturnType<typeof callback>;
 
           const response = await this.completionWithRetry<ReturnMessage>(
             callback,
             options
           );
+          const [generated_token_count, input_token_count] = response.reduce(
+            (acc, curr) => {
+              let generated = 0;
+              let inputed = 0;
+              if (curr?.generationInfo?.generated_token_count)
+                generated = curr.generationInfo.generated_token_count + acc[0];
+              if (curr?.generationInfo?.input_token_count)
+                inputed = curr.generationInfo.input_token_count + acc[1];
+              return [generated, inputed];
+            },
+            [0, 0]
+          );
+          tokenUsage.generated_token_count += generated_token_count;
+          tokenUsage.input_token_count += input_token_count;
           return response;
         })
       );
+
       const result: LLMResult = { generations, llmOutput: { tokenUsage } };
       return result;
     }

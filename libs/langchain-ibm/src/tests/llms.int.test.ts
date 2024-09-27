@@ -1,14 +1,16 @@
-import { WatsonXLLM, WatsonXInputLLM } from "../llms.js";
+/* eslint-disable no-process-env */
 import { CallbackManager } from "@langchain/core/callbacks/manager";
 import { LLMResult } from "@langchain/core/outputs";
-import { TokenUsage } from "../types.js";
 import { StringPromptValue } from "@langchain/core/prompt_values";
+import { TokenUsage } from "../types.js";
+import { WatsonxLLM, WatsonxInputLLM } from "../llms.js";
+
 const originalBackground = process.env.LANGCHAIN_CALLBACKS_BACKGROUND;
 
 describe("Text generation", () => {
   describe("Test invoke method", () => {
     test("Correct value", async () => {
-      const watsonXInstance = new WatsonXLLM({
+      const watsonXInstance = new WatsonxLLM({
         version: "2024-05-31",
         serviceUrl: process.env.API_URL as string,
         projectId: process.env.PROJECT_ID,
@@ -17,16 +19,16 @@ describe("Text generation", () => {
     });
 
     test("Invalid projectId", async () => {
-      const watsonXInstance = new WatsonXLLM({
+      const watsonXInstance = new WatsonxLLM({
         version: "2024-05-31",
         serviceUrl: process.env.API_URL as string,
         projectId: "Test wrong value",
       });
-      expect(watsonXInstance.invoke("Hello world?")).rejects.toThrow();
+      await expect(watsonXInstance.invoke("Hello world?")).rejects.toThrow();
     });
 
     test("Invalid credentials", async () => {
-      const watsonXInstance = new WatsonXLLM({
+      const watsonXInstance = new WatsonxLLM({
         version: "2024-05-31",
         serviceUrl: process.env.API_URL as string,
         projectId: "Test wrong value",
@@ -34,21 +36,21 @@ describe("Text generation", () => {
         watsonxAIApikey: "WrongApiKey",
         watsonxAIUrl: "https://wrong.wrong/",
       });
-      expect(watsonXInstance.invoke("Hello world?")).rejects.toThrow();
+      await expect(watsonXInstance.invoke("Hello world?")).rejects.toThrow();
     });
 
     test("Wrong value", async () => {
-      const watsonXInstance = new WatsonXLLM({
+      const watsonXInstance = new WatsonxLLM({
         version: "2024-05-31",
         serviceUrl: process.env.API_URL as string,
         projectId: process.env.PROJECT_ID,
       });
-      // @ts-expect-error
+      // @ts-expect-error Intentionally passing wrong value
       await watsonXInstance.invoke({});
     });
 
     test("Stop", async () => {
-      const watsonXInstance = new WatsonXLLM({
+      const watsonXInstance = new WatsonxLLM({
         version: "2024-05-31",
         serviceUrl: process.env.API_URL as string,
         projectId: process.env.PROJECT_ID,
@@ -59,7 +61,7 @@ describe("Text generation", () => {
     }, 5000);
 
     test("Stop with timeout", async () => {
-      const watsonXInstance = new WatsonXLLM({
+      const watsonXInstance = new WatsonxLLM({
         version: "2024-05-31",
         serviceUrl: "sdadasdas" as string,
         projectId: process.env.PROJECT_ID,
@@ -73,7 +75,7 @@ describe("Text generation", () => {
     }, 5000);
 
     test("Signal in call options", async () => {
-      const watsonXInstance = new WatsonXLLM({
+      const watsonXInstance = new WatsonxLLM({
         version: "2024-05-31",
         serviceUrl: process.env.API_URL as string,
         projectId: process.env.PROJECT_ID,
@@ -81,7 +83,7 @@ describe("Text generation", () => {
         maxRetries: 3,
       });
       const controllerNoAbortion = new AbortController();
-      expect(
+      await expect(
         watsonXInstance.invoke("Print hello world", {
           signal: controllerNoAbortion.signal,
         })
@@ -97,7 +99,7 @@ describe("Text generation", () => {
     }, 5000);
 
     test("Concurenccy", async () => {
-      const model = new WatsonXLLM({
+      const model = new WatsonxLLM({
         maxConcurrency: 1,
         version: "2024-05-31",
         serviceUrl: process.env.API_URL as string,
@@ -112,11 +114,11 @@ describe("Text generation", () => {
     test("Token usage", async () => {
       process.env.LANGCHAIN_CALLBACKS_BACKGROUND = "false";
       try {
-        let tokenUsage: TokenUsage = {
+        const tokenUsage: TokenUsage = {
           generated_token_count: 0,
           input_token_count: 0,
         };
-        const model = new WatsonXLLM({
+        const model = new WatsonxLLM({
           maxConcurrency: 1,
           version: "2024-05-31",
           max_new_tokens: 1,
@@ -147,7 +149,7 @@ describe("Text generation", () => {
       let countedTokens = 0;
       let streamedText = "";
       let usedTokens = 0;
-      const model = new WatsonXLLM({
+      const model = new WatsonxLLM({
         version: "2024-05-31",
         serviceUrl: process.env.API_URL as string,
         projectId: process.env.PROJECT_ID,
@@ -173,7 +175,7 @@ describe("Text generation", () => {
 
   describe("Test generate methods", () => {
     test("Basic usage", async () => {
-      const model = new WatsonXLLM({
+      const model = new WatsonxLLM({
         version: "2024-05-31",
         serviceUrl: process.env.API_URL as string,
         projectId: process.env.PROJECT_ID,
@@ -187,7 +189,7 @@ describe("Text generation", () => {
     });
 
     test("Stop", async () => {
-      const model = new WatsonXLLM({
+      const model = new WatsonxLLM({
         version: "2024-05-31",
         serviceUrl: process.env.API_URL as string,
         projectId: process.env.PROJECT_ID,
@@ -200,17 +202,19 @@ describe("Text generation", () => {
           stop: ["Hello"],
         }
       );
-      for (const g of res.generations) {
-        g.forEach((item) => {
-          expect(item.text.indexOf("world")).toBe(-1);
-        });
-      }
+
+      expect(
+        res.generations
+          .map((generation) => generation.map((item) => item.text))
+          .join("")
+          .indexOf("world")
+      ).toBe(-1);
     });
 
     test("Streaming mode with multiple prompts", async () => {
-      let nrNewTokens = [0, 0, 0];
+      const nrNewTokens = [0, 0, 0];
       const completions = ["", "", ""];
-      const model = new WatsonXLLM({
+      const model = new WatsonxLLM({
         version: "2024-05-31",
         serviceUrl: process.env.API_URL as string,
         projectId: process.env.PROJECT_ID,
@@ -240,7 +244,7 @@ describe("Text generation", () => {
     });
 
     test("Prompt value", async () => {
-      const model = new WatsonXLLM({
+      const model = new WatsonxLLM({
         version: "2024-05-31",
         serviceUrl: process.env.API_URL as string,
         projectId: process.env.PROJECT_ID,
@@ -259,7 +263,7 @@ describe("Text generation", () => {
     test("Basic usage", async () => {
       let countedTokens = 0;
       let streamedText = "";
-      const model = new WatsonXLLM({
+      const model = new WatsonxLLM({
         version: "2024-05-31",
         serviceUrl: process.env.API_URL as string,
         projectId: process.env.PROJECT_ID,
@@ -281,7 +285,7 @@ describe("Text generation", () => {
     });
 
     test("Stop", async () => {
-      const model = new WatsonXLLM({
+      const model = new WatsonxLLM({
         version: "2024-05-31",
         serviceUrl: process.env.API_URL as string,
         projectId: process.env.PROJECT_ID,
@@ -299,7 +303,7 @@ describe("Text generation", () => {
     });
 
     test("Timeout", async () => {
-      const model = new WatsonXLLM({
+      const model = new WatsonxLLM({
         version: "2024-05-31",
         serviceUrl: process.env.API_URL as string,
         projectId: process.env.PROJECT_ID,
@@ -320,7 +324,7 @@ describe("Text generation", () => {
     });
 
     test("Signal in call options", async () => {
-      const model = new WatsonXLLM({
+      const model = new WatsonxLLM({
         version: "2024-05-31",
         serviceUrl: process.env.API_URL as string,
         projectId: process.env.PROJECT_ID,
@@ -337,9 +341,9 @@ describe("Text generation", () => {
         const chunks = [];
         let i = 0;
         for await (const chunk of stream) {
-          i++;
+          i += 1;
           chunks.push(chunk);
-          if ((i = 5)) {
+          if (i === 5) {
             controller.abort();
           }
         }
@@ -349,35 +353,37 @@ describe("Text generation", () => {
 
   describe("Test getNumToken method", () => {
     test("Passing correct value", async () => {
-      const testProps: WatsonXInputLLM = {
+      const testProps: WatsonxInputLLM = {
         version: "2024-05-31",
         serviceUrl: process.env.API_URL as string,
         projectId: process.env.PROJECT_ID,
       };
-      const instance = new WatsonXLLM({
+      const instance = new WatsonxLLM({
         ...testProps,
       });
-      expect(instance.getNumTokens("Hello")).resolves.toBeGreaterThanOrEqual(0);
-      expect(
+      await expect(
+        instance.getNumTokens("Hello")
+      ).resolves.toBeGreaterThanOrEqual(0);
+      await expect(
         instance.getNumTokens("Hello", { return_tokens: true })
       ).resolves.toBeGreaterThanOrEqual(0);
     });
 
     test("Passing wrong value", async () => {
-      const testProps: WatsonXInputLLM = {
+      const testProps: WatsonxInputLLM = {
         version: "2024-05-31",
         serviceUrl: process.env.API_URL as string,
         projectId: process.env.PROJECT_ID,
         maxRetries: 3,
       };
-      const instance = new WatsonXLLM({
+      const instance = new WatsonxLLM({
         ...testProps,
       });
 
-      // @ts-expect-error
-      expect(instance.getNumTokens(12)).rejects.toThrowError();
-      expect(
-        // @ts-expect-error
+      // @ts-expect-error Intentionally passing wrong parameter
+      await expect(instance.getNumTokens(12)).rejects.toThrowError();
+      await expect(
+        // @ts-expect-error Intentionally passing wrong parameter
         instance.getNumTokens(12, { wrong: "Wrong" })
       ).rejects.toThrowError();
     });
