@@ -11456,6 +11456,7 @@ __metadata:
     "@google-cloud/storage": ^7.7.0
     "@gradientai/nodejs-sdk": ^1.2.0
     "@huggingface/inference": ^2.6.4
+    "@ibm-cloud/watsonx-ai": 1.0.1
     "@jest/globals": ^29.5.0
     "@langchain/core": "workspace:*"
     "@langchain/openai": ">=0.2.0 <0.4.0"
@@ -11552,6 +11553,7 @@ __metadata:
     hdb: 0.19.8
     hnswlib-node: ^3.0.0
     html-to-text: ^9.0.5
+    ibm-cloud-sdk-core: ^5.0.2
     ignore: ^5.2.0
     interface-datastore: ^8.2.11
     ioredis: ^5.3.2
