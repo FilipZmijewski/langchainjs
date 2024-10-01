@@ -43,7 +43,7 @@ describe("LLM unit tests", () => {
     test("Test authentication function", () => {
       const instance = authenticateAndSetInstance({
         version: "2024-05-31",
-        serviceUrl: process.env.API_URL as string,
+        serviceUrl: process.env.WATSONX_AI_SERVICE_URL as string,
       });
       expect(instance).toBeInstanceOf(WatsonxAiMlVml_v1);
     });
@@ -51,8 +51,8 @@ describe("LLM unit tests", () => {
     test("Test basic properties after init", async () => {
       const testProps: WatsonxInputLLM = {
         version: "2024-05-31",
-        serviceUrl: process.env.API_URL as string,
-        projectId: process.env.PROJECT_ID,
+        serviceUrl: process.env.WATSONX_AI_SERVICE_URL as string,
+        projectId: process.env.WATSONX_AI_PROJECT_ID,
       };
       const instance = new WatsonxLLM(testProps);
 
@@ -62,8 +62,8 @@ describe("LLM unit tests", () => {
     test("Test methods after init", () => {
       const testProps: WatsonxInputLLM = {
         version: "2024-05-31",
-        serviceUrl: process.env.API_URL as string,
-        projectId: process.env.PROJECT_ID,
+        serviceUrl: process.env.WATSONX_AI_SERVICE_URL as string,
+        projectId: process.env.WATSONX_AI_PROJECT_ID,
       };
       const instance = new WatsonxLLM({
         ...testProps,
@@ -77,8 +77,8 @@ describe("LLM unit tests", () => {
     test("Test properties after init", async () => {
       const testProps = {
         version: "2024-05-31",
-        serviceUrl: process.env.API_URL as string,
-        projectId: process.env.PROJECT_ID,
+        serviceUrl: process.env.WATSONX_AI_SERVICE_URL as string,
+        projectId: process.env.WATSONX_AI_PROJECT_ID,
         modelId: "ibm/granite-13b-chat-v2",
         max_new_tokens: 100,
         decoding_method: "sample",
@@ -115,7 +115,7 @@ describe("LLM unit tests", () => {
     test("Missing id", async () => {
       const testProps: WatsonxInputLLM = {
         version: "2024-05-31",
-        serviceUrl: process.env.API_URL as string,
+        serviceUrl: process.env.WATSONX_AI_SERVICE_URL as string,
       };
       expect(
         () =>
@@ -128,7 +128,7 @@ describe("LLM unit tests", () => {
     test("Missing other props", async () => {
       // @ts-expect-error Intentionally passing not enough parameters
       const testPropsProjectId: WatsonxInputLLM = {
-        projectId: process.env.PROJECT_ID,
+        projectId: process.env.WATSONX_AI_PROJECT_ID,
       };
       expect(
         () =>
@@ -138,7 +138,7 @@ describe("LLM unit tests", () => {
       ).toThrowError();
       // @ts-expect-error Intentionally passing not enough parameters
       const testPropsServiceUrl: WatsonxInputLLM = {
-        serviceUrl: process.env.API_URL as string,
+        serviceUrl: process.env.WATSONX_AI_SERVICE_URL as string,
       };
       expect(
         () =>
@@ -161,9 +161,9 @@ describe("LLM unit tests", () => {
     test("Passing more than one id", async () => {
       const testProps: WatsonxInputLLM = {
         version: "2024-05-31",
-        serviceUrl: process.env.API_URL as string,
-        projectId: process.env.PROJECT_ID,
-        spaceId: process.env.PROJECT_ID,
+        serviceUrl: process.env.WATSONX_AI_SERVICE_URL as string,
+        projectId: process.env.WATSONX_AI_PROJECT_ID,
+        spaceId: process.env.WATSONX_AI_PROJECT_ID,
       };
       expect(
         () =>
@@ -176,8 +176,8 @@ describe("LLM unit tests", () => {
     test("Not existing property passed", async () => {
       const testProps = {
         version: "2024-05-31",
-        serviceUrl: process.env.API_URL as string,
-        projectId: process.env.PROJECT_ID,
+        serviceUrl: process.env.WATSONX_AI_SERVICE_URL as string,
+        projectId: process.env.WATSONX_AI_PROJECT_ID,
       };
       const notExTestProps = {
         notExisting: 12,

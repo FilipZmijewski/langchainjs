@@ -12,8 +12,8 @@ describe("Text generation", () => {
     test("Correct value", async () => {
       const watsonXInstance = new WatsonxLLM({
         version: "2024-05-31",
-        serviceUrl: process.env.API_URL as string,
-        projectId: process.env.PROJECT_ID,
+        serviceUrl: process.env.WATSONX_AI_SERVICE_URL as string,
+        projectId: process.env.WATSONX_AI_PROJECT_ID,
       });
       await watsonXInstance.invoke("Hello world?");
     });
@@ -21,7 +21,7 @@ describe("Text generation", () => {
     test("Invalid projectId", async () => {
       const watsonXInstance = new WatsonxLLM({
         version: "2024-05-31",
-        serviceUrl: process.env.API_URL as string,
+        serviceUrl: process.env.WATSONX_AI_SERVICE_URL as string,
         projectId: "Test wrong value",
       });
       await expect(watsonXInstance.invoke("Hello world?")).rejects.toThrow();
@@ -30,7 +30,7 @@ describe("Text generation", () => {
     test("Invalid credentials", async () => {
       const watsonXInstance = new WatsonxLLM({
         version: "2024-05-31",
-        serviceUrl: process.env.API_URL as string,
+        serviceUrl: process.env.WATSONX_AI_SERVICE_URL as string,
         projectId: "Test wrong value",
         watsonxAIAuthType: "iam",
         watsonxAIApikey: "WrongApiKey",
@@ -42,8 +42,8 @@ describe("Text generation", () => {
     test("Wrong value", async () => {
       const watsonXInstance = new WatsonxLLM({
         version: "2024-05-31",
-        serviceUrl: process.env.API_URL as string,
-        projectId: process.env.PROJECT_ID,
+        serviceUrl: process.env.WATSONX_AI_SERVICE_URL as string,
+        projectId: process.env.WATSONX_AI_PROJECT_ID,
       });
       // @ts-expect-error Intentionally passing wrong value
       await watsonXInstance.invoke({});
@@ -52,8 +52,8 @@ describe("Text generation", () => {
     test("Stop", async () => {
       const watsonXInstance = new WatsonxLLM({
         version: "2024-05-31",
-        serviceUrl: process.env.API_URL as string,
-        projectId: process.env.PROJECT_ID,
+        serviceUrl: process.env.WATSONX_AI_SERVICE_URL as string,
+        projectId: process.env.WATSONX_AI_PROJECT_ID,
       });
       await watsonXInstance.invoke("Hello, how are you?", {
         stop: ["Hello"],
@@ -64,7 +64,7 @@ describe("Text generation", () => {
       const watsonXInstance = new WatsonxLLM({
         version: "2024-05-31",
         serviceUrl: "sdadasdas" as string,
-        projectId: process.env.PROJECT_ID,
+        projectId: process.env.WATSONX_AI_PROJECT_ID,
         max_new_tokens: 5,
         maxRetries: 3,
       });
@@ -77,8 +77,8 @@ describe("Text generation", () => {
     test("Signal in call options", async () => {
       const watsonXInstance = new WatsonxLLM({
         version: "2024-05-31",
-        serviceUrl: process.env.API_URL as string,
-        projectId: process.env.PROJECT_ID,
+        serviceUrl: process.env.WATSONX_AI_SERVICE_URL as string,
+        projectId: process.env.WATSONX_AI_PROJECT_ID,
         max_new_tokens: 5,
         maxRetries: 3,
       });
@@ -102,8 +102,8 @@ describe("Text generation", () => {
       const model = new WatsonxLLM({
         maxConcurrency: 1,
         version: "2024-05-31",
-        serviceUrl: process.env.API_URL as string,
-        projectId: process.env.PROJECT_ID,
+        serviceUrl: process.env.WATSONX_AI_SERVICE_URL as string,
+        projectId: process.env.WATSONX_AI_PROJECT_ID,
       });
       await Promise.all([
         model.invoke("Print hello world"),
@@ -122,8 +122,8 @@ describe("Text generation", () => {
           maxConcurrency: 1,
           version: "2024-05-31",
           max_new_tokens: 1,
-          serviceUrl: process.env.API_URL as string,
-          projectId: process.env.PROJECT_ID,
+          serviceUrl: process.env.WATSONX_AI_SERVICE_URL as string,
+          projectId: process.env.WATSONX_AI_PROJECT_ID,
           callbacks: CallbackManager.fromHandlers({
             async handleLLMEnd(output: LLMResult) {
               const singleTokenUsage: TokenUsage | undefined =
@@ -151,8 +151,8 @@ describe("Text generation", () => {
       let usedTokens = 0;
       const model = new WatsonxLLM({
         version: "2024-05-31",
-        serviceUrl: process.env.API_URL as string,
-        projectId: process.env.PROJECT_ID,
+        serviceUrl: process.env.WATSONX_AI_SERVICE_URL as string,
+        projectId: process.env.WATSONX_AI_PROJECT_ID,
         max_new_tokens: 5,
         streaming: true,
 
@@ -177,8 +177,8 @@ describe("Text generation", () => {
     test("Basic usage", async () => {
       const model = new WatsonxLLM({
         version: "2024-05-31",
-        serviceUrl: process.env.API_URL as string,
-        projectId: process.env.PROJECT_ID,
+        serviceUrl: process.env.WATSONX_AI_SERVICE_URL as string,
+        projectId: process.env.WATSONX_AI_PROJECT_ID,
         max_new_tokens: 5,
       });
       const res = await model.generate([
@@ -191,8 +191,8 @@ describe("Text generation", () => {
     test("Stop", async () => {
       const model = new WatsonxLLM({
         version: "2024-05-31",
-        serviceUrl: process.env.API_URL as string,
-        projectId: process.env.PROJECT_ID,
+        serviceUrl: process.env.WATSONX_AI_SERVICE_URL as string,
+        projectId: process.env.WATSONX_AI_PROJECT_ID,
         max_new_tokens: 100,
       });
 
@@ -216,8 +216,8 @@ describe("Text generation", () => {
       const completions = ["", "", ""];
       const model = new WatsonxLLM({
         version: "2024-05-31",
-        serviceUrl: process.env.API_URL as string,
-        projectId: process.env.PROJECT_ID,
+        serviceUrl: process.env.WATSONX_AI_SERVICE_URL as string,
+        projectId: process.env.WATSONX_AI_PROJECT_ID,
         max_new_tokens: 5,
         streaming: true,
         callbacks: CallbackManager.fromHandlers({
@@ -246,8 +246,8 @@ describe("Text generation", () => {
     test("Prompt value", async () => {
       const model = new WatsonxLLM({
         version: "2024-05-31",
-        serviceUrl: process.env.API_URL as string,
-        projectId: process.env.PROJECT_ID,
+        serviceUrl: process.env.WATSONX_AI_SERVICE_URL as string,
+        projectId: process.env.WATSONX_AI_PROJECT_ID,
         max_new_tokens: 5,
       });
       const res = await model.generatePrompt([
@@ -265,8 +265,8 @@ describe("Text generation", () => {
       let streamedText = "";
       const model = new WatsonxLLM({
         version: "2024-05-31",
-        serviceUrl: process.env.API_URL as string,
-        projectId: process.env.PROJECT_ID,
+        serviceUrl: process.env.WATSONX_AI_SERVICE_URL as string,
+        projectId: process.env.WATSONX_AI_PROJECT_ID,
         max_new_tokens: 100,
         callbacks: CallbackManager.fromHandlers({
           async handleLLMNewToken(token: string) {
@@ -287,8 +287,8 @@ describe("Text generation", () => {
     test("Stop", async () => {
       const model = new WatsonxLLM({
         version: "2024-05-31",
-        serviceUrl: process.env.API_URL as string,
-        projectId: process.env.PROJECT_ID,
+        serviceUrl: process.env.WATSONX_AI_SERVICE_URL as string,
+        projectId: process.env.WATSONX_AI_PROJECT_ID,
         max_new_tokens: 100,
       });
 
@@ -305,8 +305,8 @@ describe("Text generation", () => {
     test("Timeout", async () => {
       const model = new WatsonxLLM({
         version: "2024-05-31",
-        serviceUrl: process.env.API_URL as string,
-        projectId: process.env.PROJECT_ID,
+        serviceUrl: process.env.WATSONX_AI_SERVICE_URL as string,
+        projectId: process.env.WATSONX_AI_PROJECT_ID,
         max_new_tokens: 1000,
       });
       await expect(async () => {
@@ -326,8 +326,8 @@ describe("Text generation", () => {
     test("Signal in call options", async () => {
       const model = new WatsonxLLM({
         version: "2024-05-31",
-        serviceUrl: process.env.API_URL as string,
-        projectId: process.env.PROJECT_ID,
+        serviceUrl: process.env.WATSONX_AI_SERVICE_URL as string,
+        projectId: process.env.WATSONX_AI_PROJECT_ID,
         max_new_tokens: 1000,
       });
       const controller = new AbortController();
@@ -355,8 +355,8 @@ describe("Text generation", () => {
     test("Passing correct value", async () => {
       const testProps: WatsonxInputLLM = {
         version: "2024-05-31",
-        serviceUrl: process.env.API_URL as string,
-        projectId: process.env.PROJECT_ID,
+        serviceUrl: process.env.WATSONX_AI_SERVICE_URL as string,
+        projectId: process.env.WATSONX_AI_PROJECT_ID,
       };
       const instance = new WatsonxLLM({
         ...testProps,
@@ -372,8 +372,8 @@ describe("Text generation", () => {
     test("Passing wrong value", async () => {
       const testProps: WatsonxInputLLM = {
         version: "2024-05-31",
-        serviceUrl: process.env.API_URL as string,
-        projectId: process.env.PROJECT_ID,
+        serviceUrl: process.env.WATSONX_AI_SERVICE_URL as string,
+        projectId: process.env.WATSONX_AI_PROJECT_ID,
         maxRetries: 3,
       };
       const instance = new WatsonxLLM({

@@ -6,8 +6,8 @@ describe("Test embeddings", () => {
   test("embedQuery method", async () => {
     const embeddings = new WatsonxEmbeddings({
       version: "2024-05-31",
-      serviceUrl: process.env.API_URL as string,
-      projectId: process.env.PROJECT_ID,
+      serviceUrl: process.env.WATSONX_AI_SERVICE_URL as string,
+      projectId: process.env.WATSONX_AI_PROJECT_ID,
     });
     const res = await embeddings.embedQuery("Hello world");
     expect(typeof res[0]).toBe("number");
@@ -16,8 +16,8 @@ describe("Test embeddings", () => {
   test("embedDocuments", async () => {
     const embeddings = new WatsonxEmbeddings({
       version: "2024-05-31",
-      serviceUrl: process.env.API_URL as string,
-      projectId: process.env.PROJECT_ID,
+      serviceUrl: process.env.WATSONX_AI_SERVICE_URL as string,
+      projectId: process.env.WATSONX_AI_PROJECT_ID,
     });
     const res = await embeddings.embedDocuments(["Hello world", "Bye world"]);
     expect(res).toHaveLength(2);
@@ -28,8 +28,8 @@ describe("Test embeddings", () => {
   test("Concurrency", async () => {
     const embeddings = new WatsonxEmbeddings({
       version: "2024-05-31",
-      serviceUrl: process.env.API_URL as string,
-      projectId: process.env.PROJECT_ID,
+      serviceUrl: process.env.WATSONX_AI_SERVICE_URL as string,
+      projectId: process.env.WATSONX_AI_PROJECT_ID,
       maxConcurrency: 4,
     });
     const res = await embeddings.embedDocuments([
@@ -51,8 +51,8 @@ describe("Test embeddings", () => {
   test("List models", async () => {
     const embeddings = new WatsonxEmbeddings({
       version: "2024-05-31",
-      serviceUrl: process.env.API_URL as string,
-      projectId: process.env.PROJECT_ID,
+      serviceUrl: process.env.WATSONX_AI_SERVICE_URL as string,
+      projectId: process.env.WATSONX_AI_PROJECT_ID,
       maxConcurrency: 4,
     });
     const res = await embeddings.listModels();
