@@ -1,0 +1,124 @@
+# @langchain/community/embeddings/ibm
+
+This is an intergation for the LangChain.js community with Watsonx AI by IBM through their SDK.
+
+## Installation
+
+```bash npm2yarn
+npm install @langchain/community @langchain/core
+```
+
+## Embeddings
+
+This package contains the `WatsonxEmbeddings` class, which is the recommended way to interface with the Watsonx series of models.
+
+To use, install the requirements, and configure your environment depending on what type od authentication you will be using.
+
+
+## IAM authentication
+```bash
+export WATSONX_AI_AUTH_TYPE=iam
+export WATSONX_AI_APIKEY=<YOUR-APIKEY>
+```
+
+## Bearer token authentication
+```bash
+export WATSONX_AI_AUTH_TYPE=bearertoken
+export WATSONX_AI_BEARER_TOKEN=<YOUR-BEARER-TOKEN>
+```
+
+### CP4D authentication
+```bash
+export WATSONX_AI_AUTH_TYPE=cp4d
+export WATSONX_AI_USERNAME=<YOUR_USERNAME>
+export WATSONX_AI_PASSWORD=<YOUR_PASSWORD>
+export WATSONX_AI_URL=<URL>
+```
+
+Once these are places in your enviromental variables and object is initialized authentication will proceed automatically. 
+
+Authentication can also be accomplished by passing these values as parameters to a new instance.
+
+## IAM authentication
+```typescript
+import { WatsonxEmbeddings } from "@langchain/community/embeddings/ibm";
+
+    const props = {
+        version: "YYYY-MM-DD",
+        serviceUrl: "<SERVICE_URL>",
+        projectId: "<PROJECT_ID>",
+        watsonxAIAuthType: "iam",
+        watsonxAIApikey:"<YOUR-APIKEY>"
+    };
+    const instance = new WatsonxEmbeddings(props);
+```
+## Bearer token authentication
+
+```typescript
+import { WatsonxEmbeddings } from "@langchain/community/embeddings/ibm";
+
+    const props = {
+        version: "YYYY-MM-DD",
+        serviceUrl:  "<SERVICE_URL>",
+        projectId: "<PROJECT_ID>",
+        watsonxAIAuthType: "bearertoken",
+        watsonxAIBearerToken:"<YOUR-BEARERTOKEN>"
+    };
+    const instance = new WatsonxEmbeddings(props);
+```
+### CP4D authentication
+
+```typescript
+import { WatsonxEmbeddings } from "@langchain/community/embeddings/ibm";
+
+    const props = {
+        version: "YYYY-MM-DD",
+        serviceUrl: "<SERVICE_URL>",
+        projectId: "<PROJECT_ID>",
+        watsonxAIAuthType: "cp4d",
+        watsonxAIUsername:"<YOUR-USERNAME>",
+        watsonxAIPassword:"<YOUR-PASSWORD>",
+        watsonxAIUrl: "<url>"
+    };
+    const instance = new WatsonxEmbeddings(props);
+```
+
+## Loading the model
+
+```typescript
+import { WatsonxEmbeddings } from "@langchain/community/embeddings/ibm";
+
+  const instance = new WatsonxEmbeddings({
+      version: "YYYY-MM-DD",
+      serviceUrl: process.env.API_URL,
+      projectId: "<PROJECT_ID>",
+      spaceId: "<SPACE_ID>",
+      idOrName: "<DEPLOYMENT_ID>",
+      modelId: "<MODEL_ID>",
+    });
+```
+Note:
+- You must provide spaceId, projectId or idOrName(deployment id) in order to proceed.
+- Depending on the region of your provisioned service instance, use correct serviceUrl.
+- You need to specify the model you want to use for inferencing through model_id.
+
+
+## Embeddings
+  Following package supports embeddings model, you can proceed with following code snipet.
+
+```typescript
+
+  import { WatsonxEmbeddings } from "@langchain/community/embeddings/ibm";
+
+  const instance = new WatsonxEmbeddings({
+        version: "YYYY-MM-DD",
+        serviceUrl: process.env.API_URL,
+        projectId: "<PROJECT_ID>",
+        spaceId: "<SPACE_ID>",
+        idOrName: "<DEPLOYMENT_ID>",
+        modelId: "<MODEL_ID>"
+      });
+
+  const result = await instance.embedQuery("Hello world!");
+  console.log(result);
+```
