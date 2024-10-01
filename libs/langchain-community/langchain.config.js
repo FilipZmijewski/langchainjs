@@ -75,6 +75,7 @@ export const config = {
     "embeddings/gradient_ai": "embeddings/gradient_ai",
     "embeddings/hf": "embeddings/hf",
     "embeddings/hf_transformers": "embeddings/hf_transformers",
+    "embeddings/ibm": "embeddings/ibm",
     "embeddings/jina": "embeddings/jina",
     "embeddings/llama_cpp": "embeddings/llama_cpp",
     "embeddings/minimax": "embeddings/minimax",
@@ -99,6 +100,7 @@ export const config = {
     "llms/friendli": "llms/friendli",
     "llms/gradient_ai": "llms/gradient_ai",
     "llms/hf": "llms/hf",
+    "llms/ibm": "llms/ibm",
     "llms/llama_cpp": "llms/llama_cpp",
     "llms/ollama": "llms/ollama",
     "llms/portkey": "llms/portkey",
@@ -184,7 +186,8 @@ export const config = {
     // callbacks
     "callbacks/handlers/llmonitor": "callbacks/handlers/llmonitor",
     "callbacks/handlers/lunary": "callbacks/handlers/lunary",
-    "callbacks/handlers/upstash_ratelimit": "callbacks/handlers/upstash_ratelimit",
+    "callbacks/handlers/upstash_ratelimit":
+      "callbacks/handlers/upstash_ratelimit",
     // retrievers
     "retrievers/amazon_kendra": "retrievers/amazon_kendra",
     "retrievers/amazon_knowledge_base": "retrievers/amazon_knowledge_base",
@@ -305,18 +308,20 @@ export const config = {
     "utils/event_source_parse": "utils/event_source_parse",
     "utils/cassandra": "utils/cassandra",
     // experimental
-    "experimental/callbacks/handlers/datadog": "experimental/callbacks/handlers/datadog",
+    "experimental/callbacks/handlers/datadog":
+      "experimental/callbacks/handlers/datadog",
     "experimental/graph_transformers/llm":
       "experimental/graph_transformers/llm",
     "experimental/multimodal_embeddings/googlevertexai":
       "experimental/multimodal_embeddings/googlevertexai",
     "experimental/hubs/makersuite/googlemakersuitehub":
       "experimental/hubs/makersuite/googlemakersuitehub",
-    "experimental/chat_models/ollama_functions": "experimental/chat_models/ollama_functions",
+    "experimental/chat_models/ollama_functions":
+      "experimental/chat_models/ollama_functions",
     "experimental/llms/chrome_ai": "experimental/llms/chrome_ai",
     "experimental/tools/pyinterpreter": "experimental/tools/pyinterpreter",
     // chains
-    "chains/graph_qa/cypher": "chains/graph_qa/cypher"
+    "chains/graph_qa/cypher": "chains/graph_qa/cypher",
   },
   requiresOptionalDependency: [
     "tools/aws_sfn",
@@ -335,6 +340,7 @@ export const config = {
     "embeddings/tensorflow",
     "embeddings/hf",
     "embeddings/hf_transformers",
+    "embeddings/ibm",
     "embeddings/jina",
     "embeddings/llama_cpp",
     "embeddings/gradient_ai",
@@ -347,6 +353,7 @@ export const config = {
     "llms/cohere",
     "llms/gradient_ai",
     "llms/hf",
+    "llms/ibm",
     "llms/raycast",
     "llms/replicate",
     "llms/sagemaker_endpoint",
@@ -511,7 +518,7 @@ export const config = {
     // chains
     "chains/graph_qa/cypher",
     // langgraph checkpointers
-    "langgraph/checkpointers/vercel_kv"
+    "langgraph/checkpointers/vercel_kv",
   ],
   packageSuffix: "community",
   tsConfigPath: resolve("./tsconfig.json"),
