@@ -25,6 +25,6 @@ const results = await instance.generate([
 console.log(results);
 
 const stream = await instance.stream("Print hello world.");
-for await (let chunk of stream) {
+for await (const chunk of stream) {
   console.log(chunk);
 }
