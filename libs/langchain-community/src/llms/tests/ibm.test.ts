@@ -1,12 +1,16 @@
 /* eslint-disable no-process-env */
 import WatsonxAiMlVml_v1 from "@ibm-cloud/watsonx-ai/dist/watsonx-ai-ml/vml_v1.js";
 import { WatsonxLLM, WatsonxInputLLM } from "../ibm.js";
-import { authenticateAndSetInstance } from "../../utils/watsonx_ai.js";
+import { authenticateAndSetInstance } from "../../utils/ibm.js";
 import {
   WatsonxEmbeddings,
   WatsonxEmbeddingsParams,
 } from "../../embeddings/ibm.js";
 
+const fakeAuthProp = {
+  watsonxAIAuthType: "iam",
+  watsonxAIApikey: "fake_key",
+};
 export function getKey<K>(key: K): K {
   return key;
 }
@@ -44,17 +48,18 @@ describe("LLM unit tests", () => {
       const instance = authenticateAndSetInstance({
         version: "2024-05-31",
         serviceUrl: process.env.WATSONX_AI_SERVICE_URL as string,
+        ...fakeAuthProp,
       });
       expect(instance).toBeInstanceOf(WatsonxAiMlVml_v1);
     });
 
     test("Test basic properties after init", async () => {
-      const testProps: WatsonxInputLLM = {
+      const testProps = {
         version: "2024-05-31",
         serviceUrl: process.env.WATSONX_AI_SERVICE_URL as string,
         projectId: process.env.WATSONX_AI_PROJECT_ID || "testString",
       };
-      const instance = new WatsonxLLM(testProps);
+      const instance = new WatsonxLLM({ ...testProps, ...fakeAuthProp });
 
       testProperties(instance, testProps);
     });
@@ -67,6 +72,7 @@ describe("LLM unit tests", () => {
       };
       const instance = new WatsonxLLM({
         ...testProps,
+        ...fakeAuthProp,
       });
       expect(instance.getNumTokens).toBeDefined();
       expect(instance._generate).toBeDefined();
@@ -105,7 +111,7 @@ describe("LLM unit tests", () => {
         maxRetries: 3,
         maxConcurrency: 3,
       };
-      const instance = new WatsonxLLM(testProps);
+      const instance = new WatsonxLLM({ ...testProps, ...fakeAuthProp });
 
       testProperties(instance, testProps);
     });
@@ -121,6 +127,7 @@ describe("LLM unit tests", () => {
         () =>
           new WatsonxLLM({
             ...testProps,
+            ...fakeAuthProp,
           })
       ).toThrowError();
     });
@@ -130,10 +137,12 @@ describe("LLM unit tests", () => {
       const testPropsProjectId: WatsonxInputLLM = {
         projectId: process.env.WATSONX_AI_PROJECT_ID || "testString",
       };
+
       expect(
         () =>
           new WatsonxLLM({
             ...testPropsProjectId,
+            ...fakeAuthProp,
           })
       ).toThrowError();
       // @ts-expect-error Intentionally passing not enough parameters
@@ -144,6 +153,7 @@ describe("LLM unit tests", () => {
         () =>
           new WatsonxLLM({
             ...testPropsServiceUrl,
+            ...fakeAuthProp,
           })
       ).toThrowError();
       const testPropsVersion = {
@@ -163,12 +173,13 @@ describe("LLM unit tests", () => {
         version: "2024-05-31",
         serviceUrl: process.env.WATSONX_AI_SERVICE_URL as string,
         projectId: process.env.WATSONX_AI_PROJECT_ID || "testString",
-        spaceId: process.env.WATSONX_AI_PROJECT_ID,
+        spaceId: process.env.WATSONX_AI_PROJECT_ID || "testString",
       };
       expect(
         () =>
           new WatsonxLLM({
             ...testProps,
+            ...fakeAuthProp,
           })
       ).toThrowError();
     });
@@ -185,7 +196,11 @@ describe("LLM unit tests", () => {
           notExProp: 12,
         },
       };
-      const instance = new WatsonxLLM({ ...testProps, ...notExTestProps });
+      const instance = new WatsonxLLM({
+        ...testProps,
+        ...notExTestProps,
+        ...fakeAuthProp,
+      });
       testProperties(instance, testProps, notExTestProps);
     });
   });

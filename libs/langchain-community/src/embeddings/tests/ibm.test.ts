@@ -1,7 +1,10 @@
 /* eslint-disable no-process-env */
 import { testProperties } from "../../llms/tests/ibm.test.js";
 import { WatsonxEmbeddings } from "../ibm.js";
-
+const fakeAuthProp = {
+  watsonxAIAuthType: "iam",
+  watsonxAIApikey: "fake_key",
+};
 describe("Embeddings unit tests", () => {
   describe("Positive tests", () => {
     test("Basic properties", () => {
@@ -10,7 +13,7 @@ describe("Embeddings unit tests", () => {
         serviceUrl: process.env.WATSONX_AI_SERVICE_URL as string,
         projectId: process.env.WATSONX_AI_PROJECT_ID || "testString",
       };
-      const instance = new WatsonxEmbeddings(testProps);
+      const instance = new WatsonxEmbeddings({ ...testProps, ...fakeAuthProp });
       testProperties(instance, testProps);
     });
 
@@ -24,7 +27,7 @@ describe("Embeddings unit tests", () => {
         maxRetries: 2,
         modelId: "ibm/slate-125m-english-rtrvr",
       };
-      const instance = new WatsonxEmbeddings(testProps);
+      const instance = new WatsonxEmbeddings({ ...testProps, ...fakeAuthProp });
 
       testProperties(instance, testProps);
     });
@@ -40,6 +43,7 @@ describe("Embeddings unit tests", () => {
         () =>
           new WatsonxEmbeddings({
             ...testProps,
+            ...fakeAuthProp,
           })
       ).toThrowError();
     });
@@ -88,6 +92,7 @@ describe("Embeddings unit tests", () => {
         () =>
           new WatsonxEmbeddings({
             ...testProps,
+            ...fakeAuthProp,
           })
       ).toThrowError();
     });
@@ -107,6 +112,7 @@ describe("Embeddings unit tests", () => {
       const instance = new WatsonxEmbeddings({
         ...testProps,
         ...notExTestProps,
+        ...fakeAuthProp,
       });
 
       testProperties(instance, testProps, notExTestProps);

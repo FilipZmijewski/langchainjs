@@ -16,20 +16,15 @@ export const authenticateAndSetInstance = ({
   version,
   serviceUrl,
 }: WatsonxAuth & Omit<WatsonxInit, "authenticator">): WatsonXAI | undefined => {
-  if (watsonxAIAuthType === "iam" && watsonxAIApikey && watsonxAIUrl) {
+  if (watsonxAIAuthType === "iam" && watsonxAIApikey) {
     return WatsonXAI.newInstance({
       version,
       serviceUrl,
       authenticator: new IamAuthenticator({
         apikey: watsonxAIApikey,
-        url: watsonxAIUrl,
       }),
     });
-  } else if (
-    watsonxAIAuthType === "bearertoken" &&
-    watsonxAIBearerToken &&
-    watsonxAIUrl
-  ) {
+  } else if (watsonxAIAuthType === "bearertoken" && watsonxAIBearerToken) {
     return WatsonXAI.newInstance({
       version,
       serviceUrl,

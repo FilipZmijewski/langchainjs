@@ -21,7 +21,7 @@ import {
 } from "@langchain/core/outputs";
 import { BaseLanguageModelCallOptions } from "@langchain/core/language_models/base";
 import { AsyncCaller } from "@langchain/core/utils/async_caller";
-import { authenticateAndSetInstance } from "../utils/watsonx_ai.js";
+import { authenticateAndSetInstance } from "../utils/ibm.js";
 import {
   GenerationInfo,
   ResponseChunk,

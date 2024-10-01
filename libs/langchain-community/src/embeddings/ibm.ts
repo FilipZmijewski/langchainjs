@@ -6,7 +6,7 @@ import {
 import { WatsonXAI } from "@ibm-cloud/watsonx-ai";
 import { AsyncCaller } from "@langchain/core/utils/async_caller";
 import { WatsonxAuth, WatsonxParams } from "../types/watsonx_ai.js";
-import { authenticateAndSetInstance } from "../utils/watsonx_ai.js";
+import { authenticateAndSetInstance } from "../utils/ibm.js";
 
 export interface WatsonxEmbeddingsParams
   extends Omit<EmbeddingParameters, "return_options">,
