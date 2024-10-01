@@ -1,6 +1,6 @@
 /* eslint-disable no-process-env */
 import { test } from "@jest/globals";
-import { WatsonxEmbeddings } from "../watsonx_ai.js";
+import { WatsonxEmbeddings } from "../ibm.js";
 
 describe("Test embeddings", () => {
   test("embedQuery method", async () => {

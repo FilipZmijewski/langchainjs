@@ -1,11 +1,11 @@
 /* eslint-disable no-process-env */
 import WatsonxAiMlVml_v1 from "@ibm-cloud/watsonx-ai/dist/watsonx-ai-ml/vml_v1.js";
-import { WatsonxLLM, WatsonxInputLLM } from "../watsonx_ai.js";
+import { WatsonxLLM, WatsonxInputLLM } from "../ibm.js";
 import { authenticateAndSetInstance } from "../../utils/watsonx_ai.js";
 import {
   WatsonxEmbeddings,
   WatsonxEmbeddingsParams,
-} from "../../embeddings/watsonx_ai.js";
+} from "../../embeddings/ibm.js";
 
 export function getKey<K>(key: K): K {
   return key;

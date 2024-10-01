@@ -3,7 +3,7 @@ import { CallbackManager } from "@langchain/core/callbacks/manager";
 import { LLMResult } from "@langchain/core/outputs";
 import { StringPromptValue } from "@langchain/core/prompt_values";
 import { TokenUsage } from "../../types/watsonx_ai.js";
-import { WatsonxLLM, WatsonxInputLLM } from "../../llms/watsonx_ai.js";
+import { WatsonxLLM, WatsonxInputLLM } from "../ibm.js";
 
 const originalBackground = process.env.LANGCHAIN_CALLBACKS_BACKGROUND;
 
@@ -157,17 +157,17 @@ describe("Text generation", () => {
         streaming: true,
 
         callbacks: CallbackManager.fromHandlers({
+          async handleLLMEnd(output) {
+            usedTokens = output.llmOutput?.tokenUsage.generated_token_count;
+          },
           async handleLLMNewToken(token: string) {
             countedTokens += 1;
             streamedText += token;
           },
-          async handleLLMEnd(output) {
-            usedTokens = output.llmOutput?.tokenUsage.generated_token_count;
-          },
         }),
       });
-      const res = await model.invoke("Print hello world");
 
+      const res = await model.invoke(" Print hello world?");
       expect(countedTokens).toBe(usedTokens);
       expect(res).toBe(streamedText);
     });

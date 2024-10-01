@@ -427,10 +427,11 @@ export class WatsonxLLM<
                 generated_token_count: 0,
                 input_token_count: 0,
               };
-              void _runManager?.handleLLMNewToken(item.generated_text, {
-                prompt: promptIdx,
-                completion: 1,
-              });
+              if (item.generated_text !== "")
+                void _runManager?.handleLLMNewToken(item.generated_text ?? "", {
+                  prompt: promptIdx,
+                  completion: 1,
+                });
               geneartionsArray[index] ??= generationInfo;
               geneartionsArray[index].generated_token_count =
                 item.generated_token_count;
@@ -440,7 +441,6 @@ export class WatsonxLLM<
               geneartionsArray[index].text += item.generated_text;
             });
           }
-
           return geneartionsArray.map((item) => {
             const { text, ...rest } = item;
             tokenUsage.generated_token_count += rest.generated_token_count;

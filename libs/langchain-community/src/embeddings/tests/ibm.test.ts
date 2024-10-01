@@ -1,6 +1,6 @@
 /* eslint-disable no-process-env */
-import { testProperties } from "../../llms/tests/watsonx_ai.test.js";
-import { WatsonxEmbeddings } from "../watsonx_ai.js";
+import { testProperties } from "../../llms/tests/ibm.test.js";
+import { WatsonxEmbeddings } from "../ibm.js";
 
 describe("Embeddings unit tests", () => {
   describe("Positive tests", () => {
