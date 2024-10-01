@@ -30,6 +30,7 @@ export interface SecretMap {
   GRADIENT_ACCESS_TOKEN?: string;
   GRADIENT_WORKSPACE_ID?: string;
   HUGGINGFACEHUB_API_KEY?: string;
+  IBM_CLOUD_API_KEY?: string;
   IFLYTEK_API_KEY?: string;
   IFLYTEK_API_SECRET?: string;
   MILVUS_PASSWORD?: string;
@@ -66,6 +67,7 @@ export interface SecretMap {
   WATSONX_AI_PASSWORD?: string;
   WATSONX_AI_URL?: string;
   WATSONX_AI_USERNAME?: string;
+  WATSONX_PROJECT_ID?: string;
   WRITER_API_KEY?: string;
   WRITER_ORG_ID?: string;
   YC_API_KEY?: string;
