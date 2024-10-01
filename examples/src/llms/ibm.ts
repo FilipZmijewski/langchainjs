@@ -10,8 +10,8 @@ const props = {
 };
 const instance = new WatsonxLLM({
   version: "2024-05-31",
-  serviceUrl: process.env.API_URL,
-  projectId: process.env.PROJECT_ID,
+  serviceUrl: process.env.WATSONX_AI_SERVICE_URL as string,
+  projectId: process.env.WATSONX_AI_PROJECT_ID,
   ...props,
 });
 

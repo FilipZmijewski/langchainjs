@@ -2,11 +2,8 @@ import { WatsonxEmbeddings } from "@langchain/community/embeddings/ibm";
 
 const instance = new WatsonxEmbeddings({
   version: "YYYY-MM-DD",
-  serviceUrl: process.env.API_URL,
-  projectId: "<PROJECT_ID>",
-  spaceId: "<SPACE_ID>",
-  idOrName: "<DEPLOYMENT_ID>",
-  modelId: "<MODEL_ID>",
+  serviceUrl: process.env.WATSONX_AI_SERVICE_URL as string,
+  projectId: process.env.WATSONX_AI_PROJECT_ID,
 });
 
 const result = await instance.embedQuery("Hello world!");
