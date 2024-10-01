@@ -52,7 +52,7 @@ describe("LLM unit tests", () => {
       const testProps: WatsonxInputLLM = {
         version: "2024-05-31",
         serviceUrl: process.env.WATSONX_AI_SERVICE_URL as string,
-        projectId: process.env.WATSONX_AI_PROJECT_ID,
+        projectId: process.env.WATSONX_AI_PROJECT_ID || "testString",
       };
       const instance = new WatsonxLLM(testProps);
 
@@ -63,7 +63,7 @@ describe("LLM unit tests", () => {
       const testProps: WatsonxInputLLM = {
         version: "2024-05-31",
         serviceUrl: process.env.WATSONX_AI_SERVICE_URL as string,
-        projectId: process.env.WATSONX_AI_PROJECT_ID,
+        projectId: process.env.WATSONX_AI_PROJECT_ID || "testString",
       };
       const instance = new WatsonxLLM({
         ...testProps,
@@ -78,7 +78,7 @@ describe("LLM unit tests", () => {
       const testProps = {
         version: "2024-05-31",
         serviceUrl: process.env.WATSONX_AI_SERVICE_URL as string,
-        projectId: process.env.WATSONX_AI_PROJECT_ID,
+        projectId: process.env.WATSONX_AI_PROJECT_ID || "testString",
         modelId: "ibm/granite-13b-chat-v2",
         max_new_tokens: 100,
         decoding_method: "sample",
@@ -128,7 +128,7 @@ describe("LLM unit tests", () => {
     test("Missing other props", async () => {
       // @ts-expect-error Intentionally passing not enough parameters
       const testPropsProjectId: WatsonxInputLLM = {
-        projectId: process.env.WATSONX_AI_PROJECT_ID,
+        projectId: process.env.WATSONX_AI_PROJECT_ID || "testString",
       };
       expect(
         () =>
@@ -162,7 +162,7 @@ describe("LLM unit tests", () => {
       const testProps: WatsonxInputLLM = {
         version: "2024-05-31",
         serviceUrl: process.env.WATSONX_AI_SERVICE_URL as string,
-        projectId: process.env.WATSONX_AI_PROJECT_ID,
+        projectId: process.env.WATSONX_AI_PROJECT_ID || "testString",
         spaceId: process.env.WATSONX_AI_PROJECT_ID,
       };
       expect(
@@ -177,7 +177,7 @@ describe("LLM unit tests", () => {
       const testProps = {
         version: "2024-05-31",
         serviceUrl: process.env.WATSONX_AI_SERVICE_URL as string,
-        projectId: process.env.WATSONX_AI_PROJECT_ID,
+        projectId: process.env.WATSONX_AI_PROJECT_ID || "testString",
       };
       const notExTestProps = {
         notExisting: 12,

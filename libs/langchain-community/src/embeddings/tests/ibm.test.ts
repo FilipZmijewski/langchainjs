@@ -8,7 +8,7 @@ describe("Embeddings unit tests", () => {
       const testProps = {
         version: "2024-05-31",
         serviceUrl: process.env.WATSONX_AI_SERVICE_URL as string,
-        projectId: process.env.WATSONX_AI_PROJECT_ID,
+        projectId: process.env.WATSONX_AI_PROJECT_ID || "testString",
       };
       const instance = new WatsonxEmbeddings(testProps);
       testProperties(instance, testProps);
@@ -18,7 +18,7 @@ describe("Embeddings unit tests", () => {
       const testProps = {
         version: "2024-05-31",
         serviceUrl: process.env.WATSONX_AI_SERVICE_URL as string,
-        projectId: process.env.WATSONX_AI_PROJECT_ID,
+        projectId: process.env.WATSONX_AI_PROJECT_ID || "testString",
         truncate_input_tokens: 10,
         maxConcurrency: 2,
         maxRetries: 2,
@@ -47,7 +47,7 @@ describe("Embeddings unit tests", () => {
     test("Missing other props", async () => {
       // @ts-expect-error Intentionally passing wrong value
       const testPropsProjectId: WatsonxInputLLM = {
-        projectId: process.env.WATSONX_AI_PROJECT_ID,
+        projectId: process.env.WATSONX_AI_PROJECT_ID || "testString",
       };
       expect(
         () =>
@@ -81,8 +81,8 @@ describe("Embeddings unit tests", () => {
       const testProps = {
         version: "2024-05-31",
         serviceUrl: process.env.WATSONX_AI_SERVICE_URL as string,
-        projectId: process.env.WATSONX_AI_PROJECT_ID,
-        spaceId: process.env.WATSONX_AI_PROJECT_ID,
+        projectId: process.env.WATSONX_AI_PROJECT_ID || "testString",
+        spaceId: process.env.WATSONX_AI_PROJECT_ID || "testString",
       };
       expect(
         () =>
@@ -96,7 +96,7 @@ describe("Embeddings unit tests", () => {
       const testProps = {
         version: "2024-05-31",
         serviceUrl: process.env.WATSONX_AI_SERVICE_URL as string,
-        projectId: process.env.WATSONX_AI_PROJECT_ID,
+        projectId: process.env.WATSONX_AI_PROJECT_ID || "testString",
       };
       const notExTestProps = {
         notExisting: 12,
