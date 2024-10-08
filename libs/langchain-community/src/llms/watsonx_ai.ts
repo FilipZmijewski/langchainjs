@@ -1,4 +1,3 @@
-/** @deprecated Please use ibm instead */
 import {
   type BaseLLMCallOptions,
   type BaseLLMParams,
