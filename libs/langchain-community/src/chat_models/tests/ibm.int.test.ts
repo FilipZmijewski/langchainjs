@@ -19,8 +19,8 @@ describe("Tests for chat", () => {
     test("Basic invoke", async () => {
       const service = new ChatWatsonx({
         version: "2024-05-31",
-        serviceUrl: process.env.WATSONX_AI_SERVICE_URL as string,
-        projectId: process.env.WATSONX_AI_PROJECT_ID,
+        serviceUrl: process.env.WATSONX_AI_SERVICE_URL ?? "testString",
+        projectId: process.env.WATSONX_AI_PROJECT_ID ?? "testString",
       });
       const res = await service.invoke("Print hello world");
       expect(res).toBeInstanceOf(AIMessage);
@@ -28,8 +28,8 @@ describe("Tests for chat", () => {
     test("Basic generate", async () => {
       const service = new ChatWatsonx({
         version: "2024-05-31",
-        serviceUrl: process.env.WATSONX_AI_SERVICE_URL as string,
-        projectId: process.env.WATSONX_AI_PROJECT_ID,
+        serviceUrl: process.env.WATSONX_AI_SERVICE_URL ?? "testString",
+        projectId: process.env.WATSONX_AI_PROJECT_ID ?? "testString",
       });
       const message = new HumanMessage("Hello");
       const res = await service.generate([[message], [message]]);
@@ -38,8 +38,8 @@ describe("Tests for chat", () => {
     test("Invoke with system message", async () => {
       const service = new ChatWatsonx({
         version: "2024-05-31",
-        serviceUrl: process.env.WATSONX_AI_SERVICE_URL as string,
-        projectId: process.env.WATSONX_AI_PROJECT_ID,
+        serviceUrl: process.env.WATSONX_AI_SERVICE_URL ?? "testString",
+        projectId: process.env.WATSONX_AI_PROJECT_ID ?? "testString",
       });
       const messages = [
         new SystemMessage("Translate the following from English into Italian"),
@@ -51,8 +51,8 @@ describe("Tests for chat", () => {
     test("Invoke with output parser", async () => {
       const service = new ChatWatsonx({
         version: "2024-05-31",
-        serviceUrl: process.env.WATSONX_AI_SERVICE_URL as string,
-        projectId: process.env.WATSONX_AI_PROJECT_ID,
+        serviceUrl: process.env.WATSONX_AI_SERVICE_URL ?? "testString",
+        projectId: process.env.WATSONX_AI_PROJECT_ID ?? "testString",
       });
       const parser = new StringOutputParser();
       const messages = [
@@ -66,8 +66,8 @@ describe("Tests for chat", () => {
     test("Invoke with prompt", async () => {
       const service = new ChatWatsonx({
         version: "2024-05-31",
-        serviceUrl: process.env.WATSONX_AI_SERVICE_URL as string,
-        projectId: process.env.WATSONX_AI_PROJECT_ID,
+        serviceUrl: process.env.WATSONX_AI_SERVICE_URL ?? "testString",
+        projectId: process.env.WATSONX_AI_PROJECT_ID ?? "testString",
       });
       const systemTemplate = "Translate the following into {language}:";
       const promptTemplate = ChatPromptTemplate.fromMessages([
@@ -81,8 +81,8 @@ describe("Tests for chat", () => {
     test("Invoke with chat conversation", async () => {
       const service = new ChatWatsonx({
         version: "2024-05-31",
-        serviceUrl: process.env.WATSONX_AI_SERVICE_URL as string,
-        projectId: process.env.WATSONX_AI_PROJECT_ID,
+        serviceUrl: process.env.WATSONX_AI_SERVICE_URL ?? "testString",
+        projectId: process.env.WATSONX_AI_PROJECT_ID ?? "testString",
       });
       const res = await service.invoke([
         { role: "user", content: "Hi! I'm Bob" },
@@ -102,8 +102,8 @@ describe("Tests for chat", () => {
       };
       const service = new ChatWatsonx({
         version: "2024-05-31",
-        serviceUrl: process.env.WATSONX_AI_SERVICE_URL as string,
-        projectId: process.env.WATSONX_AI_PROJECT_ID,
+        serviceUrl: process.env.WATSONX_AI_SERVICE_URL ?? "testString",
+        projectId: process.env.WATSONX_AI_PROJECT_ID ?? "testString",
         callbackManager: CallbackManager.fromHandlers({
           async handleLLMEnd(output: LLMResult) {
             tokenUsage = output.llmOutput?.tokenUsage;
@@ -118,8 +118,8 @@ describe("Tests for chat", () => {
     test("Timeout", async () => {
       const service = new ChatWatsonx({
         version: "2024-05-31",
-        serviceUrl: process.env.WATSONX_AI_SERVICE_URL as string,
-        projectId: process.env.WATSONX_AI_PROJECT_ID,
+        serviceUrl: process.env.WATSONX_AI_SERVICE_URL ?? "testString",
+        projectId: process.env.WATSONX_AI_PROJECT_ID ?? "testString",
       });
       await expect(() =>
         service.invoke("Print hello world", {
@@ -130,8 +130,8 @@ describe("Tests for chat", () => {
     test("Controller options", async () => {
       const service = new ChatWatsonx({
         version: "2024-05-31",
-        serviceUrl: process.env.WATSONX_AI_SERVICE_URL as string,
-        projectId: process.env.WATSONX_AI_PROJECT_ID,
+        serviceUrl: process.env.WATSONX_AI_SERVICE_URL ?? "testString",
+        projectId: process.env.WATSONX_AI_PROJECT_ID ?? "testString",
       });
       const controller = new AbortController();
       await expect(() => {
@@ -148,8 +148,8 @@ describe("Tests for chat", () => {
     test("Basic invoke", async () => {
       const service = new ChatWatsonx({
         version: "2024-05-31",
-        serviceUrl: process.env.WATSONX_AI_SERVICE_URL as string,
-        projectId: process.env.WATSONX_AI_PROJECT_ID,
+        serviceUrl: process.env.WATSONX_AI_SERVICE_URL ?? "testString",
+        projectId: process.env.WATSONX_AI_PROJECT_ID ?? "testString",
       });
       const res = await service.invoke("Print hello world");
 
@@ -158,8 +158,8 @@ describe("Tests for chat", () => {
     test("Basic generate", async () => {
       const service = new ChatWatsonx({
         version: "2024-05-31",
-        serviceUrl: process.env.WATSONX_AI_SERVICE_URL as string,
-        projectId: process.env.WATSONX_AI_PROJECT_ID,
+        serviceUrl: process.env.WATSONX_AI_SERVICE_URL ?? "testString",
+        projectId: process.env.WATSONX_AI_PROJECT_ID ?? "testString",
       });
       const message = new HumanMessage("Hello");
       const res = await service.generate([[message], [message]]);
@@ -168,8 +168,8 @@ describe("Tests for chat", () => {
     test("Generate with n>1", async () => {
       const service = new ChatWatsonx({
         version: "2024-05-31",
-        serviceUrl: process.env.WATSONX_AI_SERVICE_URL as string,
-        projectId: process.env.WATSONX_AI_PROJECT_ID,
+        serviceUrl: process.env.WATSONX_AI_SERVICE_URL ?? "testString",
+        projectId: process.env.WATSONX_AI_PROJECT_ID ?? "testString",
         n: 3,
       });
       const message = new HumanMessage("Print hello world");
@@ -196,8 +196,8 @@ describe("Tests for chat", () => {
       let tokenUsed = 0;
       const service = new ChatWatsonx({
         version: "2024-05-31",
-        serviceUrl: process.env.WATSONX_AI_SERVICE_URL as string,
-        projectId: process.env.WATSONX_AI_PROJECT_ID,
+        serviceUrl: process.env.WATSONX_AI_SERVICE_URL ?? "testString",
+        projectId: process.env.WATSONX_AI_PROJECT_ID ?? "testString",
         n: 2,
         max_new_tokens: 5,
         streaming: true,
@@ -233,8 +233,8 @@ describe("Tests for chat", () => {
     test("Invoke with system message", async () => {
       const service = new ChatWatsonx({
         version: "2024-05-31",
-        serviceUrl: process.env.WATSONX_AI_SERVICE_URL as string,
-        projectId: process.env.WATSONX_AI_PROJECT_ID,
+        serviceUrl: process.env.WATSONX_AI_SERVICE_URL ?? "testString",
+        projectId: process.env.WATSONX_AI_PROJECT_ID ?? "testString",
       });
       const messages = [
         new SystemMessage("Translate the following from English into Italian"),
@@ -246,8 +246,8 @@ describe("Tests for chat", () => {
     test("Invoke with output parser", async () => {
       const service = new ChatWatsonx({
         version: "2024-05-31",
-        serviceUrl: process.env.WATSONX_AI_SERVICE_URL as string,
-        projectId: process.env.WATSONX_AI_PROJECT_ID,
+        serviceUrl: process.env.WATSONX_AI_SERVICE_URL ?? "testString",
+        projectId: process.env.WATSONX_AI_PROJECT_ID ?? "testString",
       });
       const parser = new StringOutputParser();
       const messages = [
@@ -261,8 +261,8 @@ describe("Tests for chat", () => {
     test("Invoke with prompt", async () => {
       const service = new ChatWatsonx({
         version: "2024-05-31",
-        serviceUrl: process.env.WATSONX_AI_SERVICE_URL as string,
-        projectId: process.env.WATSONX_AI_PROJECT_ID,
+        serviceUrl: process.env.WATSONX_AI_SERVICE_URL ?? "testString",
+        projectId: process.env.WATSONX_AI_PROJECT_ID ?? "testString",
       });
       const systemTemplate = "Translate the following into {language}:";
       const promptTemplate = ChatPromptTemplate.fromMessages([
@@ -276,8 +276,8 @@ describe("Tests for chat", () => {
     test("Invoke with chat conversation", async () => {
       const service = new ChatWatsonx({
         version: "2024-05-31",
-        serviceUrl: process.env.WATSONX_AI_SERVICE_URL as string,
-        projectId: process.env.WATSONX_AI_PROJECT_ID,
+        serviceUrl: process.env.WATSONX_AI_SERVICE_URL ?? "testString",
+        projectId: process.env.WATSONX_AI_PROJECT_ID ?? "testString",
       });
       const res = await service.invoke([
         { role: "user", content: "Hi! I'm Bob" },
@@ -297,8 +297,8 @@ describe("Tests for chat", () => {
       };
       const service = new ChatWatsonx({
         version: "2024-05-31",
-        serviceUrl: process.env.WATSONX_AI_SERVICE_URL as string,
-        projectId: process.env.WATSONX_AI_PROJECT_ID,
+        serviceUrl: process.env.WATSONX_AI_SERVICE_URL ?? "testString",
+        projectId: process.env.WATSONX_AI_PROJECT_ID ?? "testString",
         callbackManager: CallbackManager.fromHandlers({
           async handleLLMEnd(output: LLMResult) {
             tokenUsage = output.llmOutput?.tokenUsage;
@@ -313,8 +313,8 @@ describe("Tests for chat", () => {
     test("Timeout", async () => {
       const service = new ChatWatsonx({
         version: "2024-05-31",
-        serviceUrl: process.env.WATSONX_AI_SERVICE_URL as string,
-        projectId: process.env.WATSONX_AI_PROJECT_ID,
+        serviceUrl: process.env.WATSONX_AI_SERVICE_URL ?? "testString",
+        projectId: process.env.WATSONX_AI_PROJECT_ID ?? "testString",
       });
       await expect(() =>
         service.invoke("Print hello world", {
@@ -325,8 +325,8 @@ describe("Tests for chat", () => {
     test("Controller options", async () => {
       const service = new ChatWatsonx({
         version: "2024-05-31",
-        serviceUrl: process.env.WATSONX_AI_SERVICE_URL as string,
-        projectId: process.env.WATSONX_AI_PROJECT_ID,
+        serviceUrl: process.env.WATSONX_AI_SERVICE_URL ?? "testString",
+        projectId: process.env.WATSONX_AI_PROJECT_ID ?? "testString",
       });
       const controller = new AbortController();
       await expect(() => {
@@ -343,8 +343,8 @@ describe("Tests for chat", () => {
     test("Basic stream", async () => {
       const service = new ChatWatsonx({
         version: "2024-05-31",
-        serviceUrl: process.env.WATSONX_AI_SERVICE_URL as string,
-        projectId: process.env.WATSONX_AI_PROJECT_ID,
+        serviceUrl: process.env.WATSONX_AI_SERVICE_URL ?? "testString",
+        projectId: process.env.WATSONX_AI_PROJECT_ID ?? "testString",
       });
       const prompt = ChatPromptTemplate.fromMessages([
         ["system", "You are a helpful assistant"],
@@ -363,8 +363,8 @@ describe("Tests for chat", () => {
     test("Timeout", async () => {
       const service = new ChatWatsonx({
         version: "2024-05-31",
-        serviceUrl: process.env.WATSONX_AI_SERVICE_URL as string,
-        projectId: process.env.WATSONX_AI_PROJECT_ID,
+        serviceUrl: process.env.WATSONX_AI_SERVICE_URL ?? "testString",
+        projectId: process.env.WATSONX_AI_PROJECT_ID ?? "testString",
       });
       await expect(() =>
         service.stream("Print hello world", {
@@ -375,8 +375,8 @@ describe("Tests for chat", () => {
     test("Controller options", async () => {
       const service = new ChatWatsonx({
         version: "2024-05-31",
-        serviceUrl: process.env.WATSONX_AI_SERVICE_URL as string,
-        projectId: process.env.WATSONX_AI_PROJECT_ID,
+        serviceUrl: process.env.WATSONX_AI_SERVICE_URL ?? "testString",
+        projectId: process.env.WATSONX_AI_PROJECT_ID ?? "testString",
       });
       const controller = new AbortController();
       await expect(async () => {
@@ -401,8 +401,8 @@ describe("Tests for chat", () => {
       let generation = "";
       const service = new ChatWatsonx({
         version: "2024-05-31",
-        serviceUrl: process.env.WATSONX_AI_SERVICE_URL as string,
-        projectId: process.env.WATSONX_AI_PROJECT_ID,
+        serviceUrl: process.env.WATSONX_AI_SERVICE_URL ?? "testString",
+        projectId: process.env.WATSONX_AI_PROJECT_ID ?? "testString",
         callbackManager: CallbackManager.fromHandlers({
           async handleLLMEnd(output: LLMResult) {
             tokenUsage = output.llmOutput?.tokenUsage;
@@ -429,8 +429,8 @@ describe("Tests for chat", () => {
     test("Token count usage_metadata", async () => {
       const service = new ChatWatsonx({
         version: "2024-05-31",
-        serviceUrl: process.env.WATSONX_AI_SERVICE_URL as string,
-        projectId: process.env.WATSONX_AI_PROJECT_ID,
+        serviceUrl: process.env.WATSONX_AI_SERVICE_URL ?? "testString",
+        projectId: process.env.WATSONX_AI_PROJECT_ID ?? "testString",
       });
       let res: AIMessageChunk | null = null;
       const stream = await service.stream("Why is the sky blue? Be concise.");
@@ -453,8 +453,8 @@ describe("Tests for chat", () => {
     test("Passing tool to chat model", async () => {
       const service = new ChatWatsonx({
         version: "2024-05-31",
-        serviceUrl: process.env.WATSONX_AI_SERVICE_URL as string,
-        projectId: process.env.WATSONX_AI_PROJECT_ID,
+        serviceUrl: process.env.WATSONX_AI_SERVICE_URL ?? "testString",
+        projectId: process.env.WATSONX_AI_PROJECT_ID ?? "testString",
       });
       const calculatorSchema = z.object({
         operation: z
@@ -506,8 +506,8 @@ describe("Tests for chat", () => {
     test("Passing tool to chat model extended", async () => {
       const service = new ChatWatsonx({
         version: "2024-05-31",
-        serviceUrl: process.env.WATSONX_AI_SERVICE_URL as string,
-        projectId: process.env.WATSONX_AI_PROJECT_ID,
+        serviceUrl: process.env.WATSONX_AI_SERVICE_URL ?? "testString",
+        projectId: process.env.WATSONX_AI_PROJECT_ID ?? "testString",
       });
       const calculatorSchema = z.object({
         operation: z
@@ -566,8 +566,8 @@ describe("Tests for chat", () => {
     test("Binding model-specific formats", async () => {
       const service = new ChatWatsonx({
         version: "2024-05-31",
-        serviceUrl: process.env.WATSONX_AI_SERVICE_URL as string,
-        projectId: process.env.WATSONX_AI_PROJECT_ID,
+        serviceUrl: process.env.WATSONX_AI_SERVICE_URL ?? "testString",
+        projectId: process.env.WATSONX_AI_PROJECT_ID ?? "testString",
       });
 
       const modelWithTools = service.bind({
@@ -606,8 +606,8 @@ describe("Tests for chat", () => {
     test("Passing tool to chat model", async () => {
       const service = new ChatWatsonx({
         version: "2024-05-31",
-        serviceUrl: process.env.WATSONX_AI_SERVICE_URL as string,
-        projectId: process.env.WATSONX_AI_PROJECT_ID,
+        serviceUrl: process.env.WATSONX_AI_SERVICE_URL ?? "testString",
+        projectId: process.env.WATSONX_AI_PROJECT_ID ?? "testString",
       });
       const addTool = tool(
         async (input) => {
@@ -658,8 +658,8 @@ describe("Tests for chat", () => {
     test("Schema with zod", async () => {
       const service = new ChatWatsonx({
         version: "2024-05-31",
-        serviceUrl: process.env.WATSONX_AI_SERVICE_URL as string,
-        projectId: process.env.WATSONX_AI_PROJECT_ID,
+        serviceUrl: process.env.WATSONX_AI_SERVICE_URL ?? "testString",
+        projectId: process.env.WATSONX_AI_PROJECT_ID ?? "testString",
         temperature: 0.2,
       });
       const joke = z.object({
@@ -684,8 +684,8 @@ describe("Tests for chat", () => {
     test("Schema with object", async () => {
       const service = new ChatWatsonx({
         version: "2024-05-31",
-        serviceUrl: process.env.WATSONX_AI_SERVICE_URL as string,
-        projectId: process.env.WATSONX_AI_PROJECT_ID,
+        serviceUrl: process.env.WATSONX_AI_SERVICE_URL ?? "testString",
+        projectId: process.env.WATSONX_AI_PROJECT_ID ?? "testString",
         temperature: 0.2,
       });
       const structuredLlm = service.withStructuredOutput({
@@ -710,8 +710,8 @@ describe("Tests for chat", () => {
     test("Schema with rawOutput", async () => {
       const service = new ChatWatsonx({
         version: "2024-05-31",
-        serviceUrl: process.env.WATSONX_AI_SERVICE_URL as string,
-        projectId: process.env.WATSONX_AI_PROJECT_ID,
+        serviceUrl: process.env.WATSONX_AI_SERVICE_URL ?? "testString",
+        projectId: process.env.WATSONX_AI_PROJECT_ID ?? "testString",
         temperature: 0.2,
       });
       const structuredLlm = service.withStructuredOutput(
@@ -743,8 +743,8 @@ describe("Tests for chat", () => {
     test("Schema with zod and JSON mode", async () => {
       const service = new ChatWatsonx({
         version: "2024-05-31",
-        serviceUrl: process.env.WATSONX_AI_SERVICE_URL as string,
-        projectId: process.env.WATSONX_AI_PROJECT_ID,
+        serviceUrl: process.env.WATSONX_AI_SERVICE_URL ?? "testString",
+        projectId: process.env.WATSONX_AI_PROJECT_ID ?? "testString",
         temperature: 0,
       });
       const calculatorSchema = z.object({
