@@ -1,9 +1,9 @@
 import {
   AIMessage,
   AIMessageChunk,
+  ChatMessage,
   ChatMessageChunk,
   FunctionMessageChunk,
-  HumanMessage,
   HumanMessageChunk,
   isAIMessage,
   MessageContent,
@@ -13,12 +13,15 @@ import {
 } from "@langchain/core/messages";
 import {
   BaseLanguageModelInput,
+  FunctionDefinition,
+  StructuredOutputMethodOptions,
   type BaseLanguageModelCallOptions,
 } from "@langchain/core/language_models/base";
 import { CallbackManagerForLLMRun } from "@langchain/core/callbacks/manager";
 import {
   BaseChatModel,
   BindToolsInput,
+  LangSmithParams,
   type BaseChatModelParams,
 } from "@langchain/core/language_models/chat_models";
 import {
@@ -28,27 +31,45 @@ import {
 } from "@langchain/core/outputs";
 import { AsyncCaller } from "@langchain/core/utils/async_caller";
 import {
+  TextChatConstants,
   TextChatMessagesTextChatMessageAssistant,
   TextChatParameterTools,
   TextChatParams,
   TextChatResponse,
+  TextChatResponseFormat,
   TextChatResultChoice,
   TextChatResultMessage,
   TextChatToolCall,
+  TextChatToolChoiceTool,
   TextChatUsage,
 } from "@ibm-cloud/watsonx-ai/dist/watsonx-ai-ml/vml_v1.js";
 import { WatsonXAI } from "@ibm-cloud/watsonx-ai";
-import zodToJsonSchema from "zod-to-json-schema";
 import {
-  JsonOutputKeyToolsParser,
   convertLangChainToolCallToOpenAI,
+  JsonOutputKeyToolsParser,
   makeInvalidToolCall,
   parseToolCall,
 } from "@langchain/core/output_parsers/openai_tools";
-import { WatsonxAuth, WatsonxParams } from "../types/watsonx_ai.js";
-import { authenticateAndSetInstance } from "../utils/ibm.js";
 import { ToolCallChunk } from "@langchain/core/messages/tool";
-import { Runnable } from "@langchain/core/runnables";
+import {
+  Runnable,
+  RunnablePassthrough,
+  RunnableSequence,
+} from "@langchain/core/runnables";
+import { z } from "zod";
+import {
+  BaseLLMOutputParser,
+  JsonOutputParser,
+  StructuredOutputParser,
+} from "@langchain/core/output_parsers";
+import { isZodSchema } from "@langchain/core/utils/types";
+import { zodToJsonSchema } from "zod-to-json-schema";
+import { NewTokenIndices } from "@langchain/core/callbacks/base";
+import { WatsonxAuth, WatsonxParams } from "../types/watsonx_ai.js";
+import {
+  _convertToolCallIdToMistralCompatible,
+  authenticateAndSetInstance,
+} from "../utils/ibm.js";
 
 export interface WatsonxDeltaStream {
   role?: string;
@@ -56,16 +77,49 @@ export interface WatsonxDeltaStream {
   tool_calls?: TextChatToolCall[];
   refusal?: string;
 }
-export interface WatsonxCallOptionsChat
-  extends BaseLanguageModelCallOptions,
-    Omit<TextChatParams, "tools"> {
+
+export interface WatsonxCallParams
+  extends Partial<
+    Omit<
+      TextChatParams,
+      | "toolChoiceOption"
+      | "toolChoice"
+      | "frequencyPenalty"
+      | "topLogprobs"
+      | "maxTokens"
+      | "presencePenalty"
+      | "responseFormat"
+      | "timeLimit"
+    >
+  > {
   maxRetries?: number;
-  tools?: ChatWatsonxToolType[];
+  tool_choice?: TextChatToolChoiceTool;
+  tool_choice_option?: TextChatConstants.ToolChoiceOption | string;
+  frequency_penalty?: number;
+  top_logprobs?: number;
+  max_new_tokens?: number;
+  presence_penalty?: number;
+  top_p?: number;
+  time_limit?: number;
+  response_format?: TextChatResponseFormat;
+}
+export interface WatsonxCallOptionsChat
+  extends Omit<BaseLanguageModelCallOptions, "stop">,
+    WatsonxCallParams {
+  promptIndex?: number;
 }
 
 type ChatWatsonxToolType = BindToolsInput | TextChatParameterTools;
 
-export interface ChatWatsonxInput extends BaseChatModelParams, WatsonxParams {}
+export interface ChatWatsonxInput extends BaseChatModelParams, WatsonxParams {
+  streaming?: boolean;
+}
+
+function _convertToValidToolId(modelId: string, tool_call_id: string) {
+  if (modelId.startsWith("mistralai"))
+    return _convertToolCallIdToMistralCompatible(tool_call_id);
+  else return tool_call_id;
+}
 
 function _convertToolToWatsonxTool(
   tools: ChatWatsonxToolType[]
@@ -74,20 +128,20 @@ function _convertToolToWatsonxTool(
     if ("type" in tool) {
       return tool as WatsonXAI.TextChatParameterTools;
     }
-    const description = tool.description ?? `Tool: ${tool.name}`;
     return {
       type: "function",
       function: {
         name: tool.name,
-        description,
+        description: tool.description ?? "Tool: " + tool.name,
         parameters: zodToJsonSchema(tool.schema),
       },
     };
   });
 }
 
-function convertMessagesToWatsonxMessages(
-  messages: BaseMessage[]
+function _convertMessagesToWatsonxMessages(
+  messages: BaseMessage[],
+  modelId: string
 ): TextChatResultMessage[] {
   const getRole = (role: MessageType) => {
     switch (role) {
@@ -100,7 +154,7 @@ function convertMessagesToWatsonxMessages(
       case "tool":
         return "tool";
       case "function":
-        return "assistant";
+        return "function";
       default:
         throw new Error(`Unknown message type: ${role}`);
     }
@@ -111,32 +165,24 @@ function convertMessagesToWatsonxMessages(
       return content;
     }
     throw new Error(
-      `WatsonxChat does not support non text message content. Received: ${JSON.stringify(
+      `Received: ${JSON.stringify(
         content,
         null,
         2
-      )}`
+      )} which is non-string content. This is currently not supported.`
     );
   };
 
   const getTools = (message: BaseMessage): TextChatToolCall[] | undefined => {
-    if (isAIMessage(message) && !!message.tool_calls?.length) {
+    if (isAIMessage(message) && message.tool_calls?.length) {
       return message.tool_calls
         .map((toolCall) => ({
           ...toolCall,
-          id: toolCall.id ?? "",
+          id: _convertToValidToolId(modelId, toolCall.id ?? ""),
         }))
         .map(convertLangChainToolCallToOpenAI) as TextChatToolCall[];
     }
-    if (!message.additional_kwargs.tool_calls?.length) {
-      return undefined;
-    }
-    const toolCalls = message.additional_kwargs.tool_calls;
-    return toolCalls?.map((toolCall) => ({
-      id: toolCall.id,
-      type: "function",
-      function: toolCall.function,
-    }));
+    return undefined;
   };
 
   return messages.map((message) => {
@@ -147,7 +193,7 @@ function convertMessagesToWatsonxMessages(
         role: getRole(message._getType()),
         content,
         name: message.name,
-        tool_call_id: message.tool_call_id,
+        tool_call_id: _convertToValidToolId(modelId, message.tool_call_id),
       };
     }
 
@@ -159,14 +205,14 @@ function convertMessagesToWatsonxMessages(
   }) as TextChatResultMessage[];
 }
 
-function watsonxResponseToChatMessage(
+function _watsonxResponseToChatMessage(
   choice: TextChatResultChoice,
   rawDataId: string,
   usage?: TextChatUsage
 ): BaseMessage {
   const { message } = choice;
   if (!message) throw new Error("No message presented");
-  let rawToolCalls: TextChatToolCall[] = message.tool_calls ?? [];
+  const rawToolCalls: TextChatToolCall[] = message.tool_calls ?? [];
 
   switch (message.role) {
     case "assistant": {
@@ -175,28 +221,24 @@ function watsonxResponseToChatMessage(
       for (const rawToolCall of rawToolCalls) {
         try {
           const parsed = parseToolCall(rawToolCall, { returnId: true });
-          toolCalls.push({
-            ...parsed,
-            id: parsed.id,
-          });
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          toolCalls.push(parsed);
         } catch (e: any) {
           invalidToolCalls.push(makeInvalidToolCall(rawToolCall, e.message));
         }
       }
+      const additional_kwargs: Record<string, unknown> = {
+        tool_calls: rawToolCalls.map((toolCall) => ({
+          ...toolCall,
+          type: "function",
+        })),
+      };
+
       return new AIMessage({
         id: rawDataId,
         content: message.content ?? "",
         tool_calls: toolCalls,
         invalid_tool_calls: invalidToolCalls,
-        additional_kwargs: {
-          tool_calls: rawToolCalls.length
-            ? rawToolCalls.map((toolCall) => ({
-                ...toolCall,
-                type: "function",
-              }))
-            : undefined,
-        },
+        additional_kwargs,
         usage_metadata: usage
           ? {
               input_tokens: usage.prompt_tokens ?? 0,
@@ -207,13 +249,14 @@ function watsonxResponseToChatMessage(
       });
     }
     default:
-      return new HumanMessage(message.content ?? "");
+      return new ChatMessage(message.content ?? "", message.role ?? "unknown");
   }
 }
 
 function _convertDeltaToMessageChunk(
   delta: WatsonxDeltaStream,
   rawData: TextChatResponse,
+  modelId: string,
   usage?: TextChatUsage,
   defaultRole?: TextChatMessagesTextChatMessageAssistant.Constants.Role
 ) {
@@ -229,7 +272,7 @@ function _convertDeltaToMessageChunk(
         } => ({
           ...toolCall,
           index,
-          id: toolCall.id,
+          id: _convertToValidToolId(modelId, toolCall.id),
           type: "function",
         })
       )
@@ -255,7 +298,7 @@ function _convertDeltaToMessageChunk(
     return new HumanMessageChunk({ content });
   } else if (role === "assistant") {
     const toolCallChunks: ToolCallChunk[] = [];
-    if (rawToolCalls)
+    if (rawToolCalls && rawToolCalls.length > 0)
       for (const rawToolCallChunk of rawToolCalls) {
         toolCallChunks.push({
           name: rawToolCallChunk.function?.name,
@@ -282,7 +325,7 @@ function _convertDeltaToMessageChunk(
       return new ToolMessageChunk({
         content,
         additional_kwargs,
-        tool_call_id: rawToolCalls?.[0].id,
+        tool_call_id: _convertToValidToolId(modelId, rawToolCalls?.[0].id),
       });
   } else if (role === "function") {
     return new FunctionMessageChunk({
@@ -334,9 +377,23 @@ export class ChatWatsonx<
       watsonxAIUrl: "watsonx_ai_url",
     };
   }
+
+  getLsParams(options: this["ParsedCallOptions"]): LangSmithParams {
+    const params = this.invocationParams(options);
+    return {
+      ls_provider: "watsonx",
+      ls_model_name: this.modelId,
+      ls_model_type: "chat",
+      ls_temperature: params.temperature ?? undefined,
+      ls_max_tokens: params.maxTokens ?? undefined,
+    };
+  }
+
   modelId = "mistralai/mistral-large";
 
   version: "2024-05-31";
+
+  max_new_tokens = 100;
 
   serviceUrl: string;
 
@@ -349,8 +406,6 @@ export class ChatWatsonx<
   logprobs?: boolean;
 
   top_logprobs?: number;
-
-  max_new_tokens?: number;
 
   n?: number;
 
@@ -366,13 +421,18 @@ export class ChatWatsonx<
 
   maxConcurrency?: number;
 
-  stop_sequences: string;
-
   service: WatsonXAI;
 
-  constructor(fields: ChatWatsonxInput & WatsonxAuth) {
-    super(fields);
+  response_format?: TextChatResponseFormat | string;
 
+  streaming: boolean;
+
+  constructor(
+    fields: ChatWatsonxInput &
+      WatsonxAuth &
+      Partial<Omit<WatsonxCallParams, "tool_choice">>
+  ) {
+    super(fields);
     if (
       (fields.projectId && fields.spaceId) ||
       (fields.idOrName && fields.projectId) ||
@@ -386,8 +446,19 @@ export class ChatWatsonx<
       );
     this.projectId = fields?.projectId;
     this.spaceId = fields?.spaceId;
-
+    this.temperature = fields?.temperature;
+    this.maxRetries = fields?.maxRetries;
+    this.maxConcurrency = fields?.maxConcurrency;
+    this.frequency_penalty = fields?.frequency_penalty;
+    this.top_logprobs = fields?.top_logprobs;
+    this.max_new_tokens = fields?.max_new_tokens ?? this.max_new_tokens;
+    this.presence_penalty = fields?.presence_penalty;
+    this.top_p = fields?.top_p;
+    this.time_limit = fields?.time_limit;
+    this.response_format = fields?.response_format ?? this.response_format;
     this.serviceUrl = fields?.serviceUrl;
+    this.streaming = fields?.streaming ?? this.streaming;
+    this.n = fields?.n ?? this.n;
     const {
       watsonxAIApikey,
       watsonxAIAuthType,
@@ -419,21 +490,21 @@ export class ChatWatsonx<
 
   invocationParams(options: this["ParsedCallOptions"]) {
     return {
-      maxTokens: options.maxTokens ?? this.max_new_tokens,
+      maxTokens: options.max_new_tokens ?? this.max_new_tokens,
       temperature: options?.temperature ?? this.temperature,
-      timeLimit: options?.timeLimit ?? this.time_limit,
-      topP: options?.topP ?? this.top_p,
-      presencePenalty: options?.presencePenalty ?? this.presence_penalty,
+      timeLimit: options?.time_limit ?? this.time_limit,
+      topP: options?.top_p ?? this.top_p,
+      presencePenalty: options?.presence_penalty ?? this.presence_penalty,
       n: options?.n ?? this.n,
-      topLogprobs: options?.topLogprobs ?? this.top_logprobs,
+      topLogprobs: options?.top_logprobs ?? this.top_logprobs,
       logprobs: options?.logprobs ?? this?.logprobs,
-      frequencyPenalty: options?.frequencyPenalty ?? this.frequency_penalty,
+      frequencyPenalty: options?.frequency_penalty ?? this.frequency_penalty,
       tools: options.tools
         ? _convertToolToWatsonxTool(options.tools)
         : undefined,
-      toolChoice: options.toolChoice,
-      responseFormat: options.responseFormat,
-      toolChoiceOption: options.toolChoiceOption,
+      toolChoice: options.tool_choice,
+      responseFormat: options.response_format,
+      toolChoiceOption: options.tool_choice_option,
     };
   }
 
@@ -476,35 +547,88 @@ export class ChatWatsonx<
   async _generate(
     messages: BaseMessage[],
     options: this["ParsedCallOptions"],
-    _runManager?: CallbackManagerForLLMRun
+    runManager?: CallbackManagerForLLMRun
   ): Promise<ChatResult> {
-    const params = { ...this.invocationParams(options), ...this.scopeId() };
-    const watsonxMessages = convertMessagesToWatsonxMessages(messages);
-
-    const callback = () =>
-      this.service.textChat({
-        ...params,
-        messages: watsonxMessages,
-      });
-
-    const { result } = await this.completionWithRetry(callback, options);
-    const generations: ChatGeneration[] = [];
-    for (const part of result.choices) {
-      const generation: ChatGeneration = {
-        text: part.message?.content ?? "",
-        message: watsonxResponseToChatMessage(part, result.id, result?.usage),
+    if (this.streaming) {
+      const stream = this._streamResponseChunks(messages, options, runManager);
+      const finalChunks: Record<number, ChatGenerationChunk> = {};
+      let tokenUsage = {
+        input_tokens: 0,
+        output_tokens: 0,
+        total_tokens: 0,
       };
-      if (part.finish_reason) {
-        generation.generationInfo = { finish_reason: part.finish_reason };
+      const tokenUsages = [];
+      for await (const chunk of stream) {
+        const message = chunk.message as AIMessageChunk;
+        if (message?.usage_metadata) {
+          const completion = chunk.generationInfo?.completion;
+          tokenUsages[completion] = message.usage_metadata;
+        }
+        chunk.message.response_metadata = {
+          ...chunk.generationInfo,
+          ...chunk.message.response_metadata,
+        };
+
+        const index =
+          (chunk.generationInfo as NewTokenIndices)?.completion ?? 0;
+        if (finalChunks[index] === undefined) {
+          finalChunks[index] = chunk;
+        } else {
+          finalChunks[index] = finalChunks[index].concat(chunk);
+        }
       }
-      generations.push(generation);
+      tokenUsage = tokenUsages.reduce((acc, curr) => {
+        return {
+          input_tokens: acc.input_tokens + curr.input_tokens,
+          output_tokens: acc.output_tokens + curr.output_tokens,
+          total_tokens: acc.total_tokens + curr.total_tokens,
+        };
+      });
+      const generations = Object.entries(finalChunks)
+        .sort(([aKey], [bKey]) => parseInt(aKey, 10) - parseInt(bKey, 10))
+        .map(([_, value]) => value);
+      return { generations, llmOutput: { tokenUsage } };
+    } else {
+      const params: Omit<TextChatParams, "messages"> = {
+        ...this.invocationParams(options),
+        ...this.scopeId(),
+      };
+      const watsonxMessages = _convertMessagesToWatsonxMessages(
+        messages,
+        this.modelId
+      );
+      const callback = () =>
+        this.service.textChat({
+          ...params,
+          messages: watsonxMessages,
+        });
+      const { result } = await this.completionWithRetry(callback, options);
+      const generations: ChatGeneration[] = [];
+      for (const part of result.choices) {
+        const generation: ChatGeneration = {
+          text: part.message?.content ?? "",
+          message: _watsonxResponseToChatMessage(
+            part,
+            result.id,
+            result?.usage
+          ),
+        };
+        if (part.finish_reason) {
+          generation.generationInfo = { finish_reason: part.finish_reason };
+        }
+        generations.push(generation);
+      }
+      if (options.signal?.aborted) {
+        throw new Error("AbortError");
+      }
+
+      return {
+        generations,
+        llmOutput: {
+          tokenUsage: result?.usage,
+        },
+      };
     }
-    return {
-      generations,
-      llmOutput: {
-        tokenUsage: result?.usage,
-      },
-    };
   }
 
   async *_streamResponseChunks(
@@ -513,7 +637,10 @@ export class ChatWatsonx<
     _runManager?: CallbackManagerForLLMRun
   ): AsyncGenerator<ChatGenerationChunk> {
     const params = { ...this.invocationParams(options), ...this.scopeId() };
-    const watsonxMessages = convertMessagesToWatsonxMessages(messages);
+    const watsonxMessages = _convertMessagesToWatsonxMessages(
+      messages,
+      this.modelId
+    );
     const callback = () =>
       this.service.textChatStream({
         ...params,
@@ -539,7 +666,7 @@ export class ChatWatsonx<
       }
 
       const newTokenIndices = {
-        prompt: 0,
+        prompt: options.promptIndex ?? 0,
         completion: choice.index ?? 0,
       };
 
@@ -551,6 +678,7 @@ export class ChatWatsonx<
       const message = _convertDeltaToMessageChunk(
         delta,
         data,
+        this.modelId,
         chunk.data.usage,
         defaultRole
       );
@@ -558,13 +686,14 @@ export class ChatWatsonx<
       defaultRole =
         (delta.role as TextChatMessagesTextChatMessageAssistant.Constants.Role) ??
         defaultRole;
-      if (message === null) {
+
+      if (message === null || (!delta.content && !delta.tool_calls)) {
         continue;
       }
 
       const generationChunk = new ChatGenerationChunk({
         message,
-        text: delta?.content ?? "",
+        text: delta.content ?? "",
         generationInfo,
       });
 
@@ -584,5 +713,143 @@ export class ChatWatsonx<
   /** @ignore */
   _combineLLMOutput() {
     return [];
+  }
+
+  withStructuredOutput<
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    RunOutput extends Record<string, any> = Record<string, any>
+  >(
+    outputSchema:
+      | z.ZodType<RunOutput>
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      | Record<string, any>,
+    config?: StructuredOutputMethodOptions<false>
+  ): Runnable<BaseLanguageModelInput, RunOutput>;
+
+  withStructuredOutput<
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    RunOutput extends Record<string, any> = Record<string, any>
+  >(
+    outputSchema:
+      | z.ZodType<RunOutput>
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      | Record<string, any>,
+    config?: StructuredOutputMethodOptions<true>
+  ): Runnable<BaseLanguageModelInput, { raw: BaseMessage; parsed: RunOutput }>;
+
+  withStructuredOutput<
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    RunOutput extends Record<string, any> = Record<string, any>
+  >(
+    outputSchema:
+      | z.ZodType<RunOutput>
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      | Record<string, any>,
+    config?: StructuredOutputMethodOptions<boolean>
+  ):
+    | Runnable<BaseLanguageModelInput, RunOutput>
+    | Runnable<
+        BaseLanguageModelInput,
+        { raw: BaseMessage; parsed: RunOutput }
+      > {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const schema: z.ZodType<RunOutput> | Record<string, any> = outputSchema;
+    const name = config?.name;
+    const method = config?.method;
+    const includeRaw = config?.includeRaw;
+    let functionName = name ?? "extract";
+    let outputParser: BaseLLMOutputParser<RunOutput>;
+    let llm: Runnable<BaseLanguageModelInput>;
+    if (method === "jsonMode") {
+      const options = {
+        response_format: { type: "json_object" },
+      } as Partial<CallOptions>;
+      llm = this.bind(options);
+
+      if (isZodSchema(schema)) {
+        outputParser = StructuredOutputParser.fromZodSchema(schema);
+      } else {
+        outputParser = new JsonOutputParser<RunOutput>();
+      }
+    } else {
+      if (isZodSchema(schema)) {
+        const asJsonSchema = zodToJsonSchema(schema);
+        llm = this.bind({
+          tools: [
+            {
+              type: "function" as const,
+              function: {
+                name: functionName,
+                description: asJsonSchema.description,
+                parameters: asJsonSchema,
+              },
+            },
+          ],
+          // Ideally that would be set to required but this is not supported yet
+          tool_choice_option: "auto",
+        } as Partial<CallOptions>);
+        outputParser = new JsonOutputKeyToolsParser({
+          returnSingle: true,
+          keyName: functionName,
+          zodSchema: schema,
+        });
+      } else {
+        let openAIFunctionDefinition: FunctionDefinition;
+        if (
+          typeof schema.name === "string" &&
+          typeof schema.parameters === "object" &&
+          schema.parameters != null
+        ) {
+          openAIFunctionDefinition = schema as FunctionDefinition;
+          functionName = schema.name;
+        } else {
+          openAIFunctionDefinition = {
+            name: functionName,
+            description: schema.description ?? "",
+            parameters: schema,
+          };
+        }
+        llm = this.bind({
+          tools: [
+            {
+              type: "function" as const,
+              function: openAIFunctionDefinition,
+            },
+          ],
+          // Ideally that would be set to required but this is not supported yet
+          tool_choice_option: "auto",
+        } as Partial<CallOptions>);
+        outputParser = new JsonOutputKeyToolsParser<RunOutput>({
+          returnSingle: true,
+          keyName: functionName,
+        });
+      }
+    }
+
+    if (!includeRaw) {
+      return llm.pipe(outputParser) as Runnable<
+        BaseLanguageModelInput,
+        RunOutput
+      >;
+    }
+
+    const parserAssign = RunnablePassthrough.assign({
+      parsed: (input: any, config) => outputParser.invoke(input.raw, config),
+    });
+    const parserNone = RunnablePassthrough.assign({
+      parsed: () => null,
+    });
+    const parsedWithFallback = parserAssign.withFallbacks({
+      fallbacks: [parserNone],
+    });
+    return RunnableSequence.from<
+      BaseLanguageModelInput,
+      { raw: BaseMessage; parsed: RunOutput }
+    >([
+      {
+        raw: llm,
+      },
+      parsedWithFallback,
+    ]);
   }
 }
