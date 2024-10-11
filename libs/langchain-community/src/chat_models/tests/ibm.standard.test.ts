@@ -28,6 +28,7 @@ class ChatOpenAIStandardUnitTests extends ChatModelUnitTests<
         version: "2024-05-31",
         serviceUrl: process.env.WATSONX_AI_SERVICE_URL ?? "testString",
         projectId: process.env.WATSONX_AI_PROJECT_ID ?? "testString",
+        watsonxAIAuthType: "iam",
       },
     });
   }
