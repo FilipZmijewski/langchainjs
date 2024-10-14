@@ -228,9 +228,9 @@ describe("Text generation", () => {
         }),
       });
       const res = await model.generate([
-        "Print hello world!",
-        "Print hello otter!",
-        "Print hello butter!",
+        "Print bye bye world!",
+        "Print bye bye world!",
+        "Print Hello IBM!",
       ]);
       res.generations.forEach((generation, index) => {
         generation.forEach((g) => {
