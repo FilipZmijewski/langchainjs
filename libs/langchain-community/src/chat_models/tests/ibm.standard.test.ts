@@ -11,7 +11,7 @@ import {
 } from "../ibm.js";
 import { WatsonxAuth } from "../../types/watsonx_ai.js";
 
-class ChatOpenAIStandardUnitTests extends ChatModelUnitTests<
+class ChatWatsonxStandardTests extends ChatModelUnitTests<
   WatsonxCallOptionsChat,
   AIMessageChunk,
   ChatWatsonxInput &
@@ -47,9 +47,9 @@ class ChatOpenAIStandardUnitTests extends ChatModelUnitTests<
   }
 }
 
-const testClass = new ChatOpenAIStandardUnitTests();
+const testClass = new ChatWatsonxStandardTests();
 
-test("ChatOpenAIStandardUnitTests", () => {
+test("ChatWatsonxStandardTests", () => {
   const testResults = testClass.runTests();
   expect(testResults).toBe(true);
 });
