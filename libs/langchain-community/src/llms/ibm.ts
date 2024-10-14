@@ -28,7 +28,7 @@ import {
   TokenUsage,
   WatsonxAuth,
   WatsonxParams,
-} from "../types/watsonx_ai.js";
+} from "../types/ibm.js";
 
 /**
  * Input to LLM class.
