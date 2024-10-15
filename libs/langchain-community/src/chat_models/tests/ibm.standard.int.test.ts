@@ -33,14 +33,6 @@ class ChatWatsonxStandardIntegrationTests extends ChatModelIntegrationTests<
       },
     });
   }
-
-  async testCacheComplexMessageTypes() {
-    this.skipTestMessage(
-      "testStructuredFewShotExamples",
-      "ChatWatsonx",
-      "Model does not support non-string content"
-    );
-  }
 }
 
 const testClass = new ChatWatsonxStandardIntegrationTests();

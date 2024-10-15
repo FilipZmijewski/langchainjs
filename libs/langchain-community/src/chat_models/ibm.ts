@@ -6,7 +6,6 @@ import {
   FunctionMessageChunk,
   HumanMessageChunk,
   isAIMessage,
-  MessageContent,
   MessageType,
   ToolMessageChunk,
   type BaseMessage,
@@ -160,19 +159,6 @@ function _convertMessagesToWatsonxMessages(
     }
   };
 
-  const getContent = (content: MessageContent): string => {
-    if (typeof content === "string") {
-      return content;
-    }
-    throw new Error(
-      `Received: ${JSON.stringify(
-        content,
-        null,
-        2
-      )} which is non-string content. This is currently not supported.`
-    );
-  };
-
   const getTools = (message: BaseMessage): TextChatToolCall[] | undefined => {
     if (isAIMessage(message) && message.tool_calls?.length) {
       return message.tool_calls
@@ -187,7 +173,7 @@ function _convertMessagesToWatsonxMessages(
 
   return messages.map((message) => {
     const toolCalls = getTools(message);
-    const content = toolCalls === undefined ? getContent(message.content) : "";
+    const content = toolCalls === undefined ? message.content : "";
     if ("tool_call_id" in message && typeof message.tool_call_id === "string") {
       return {
         role: getRole(message._getType()),
@@ -391,9 +377,11 @@ export class ChatWatsonx<
 
   modelId = "mistralai/mistral-large";
 
-  version: "2024-05-31";
+  version = "2024-05-31";
 
   max_new_tokens = 100;
+
+  maxRetries = 0;
 
   serviceUrl: string;
 
@@ -416,8 +404,6 @@ export class ChatWatsonx<
   top_p?: number;
 
   time_limit?: number;
-
-  maxRetries?: number;
 
   maxConcurrency?: number;
 
@@ -447,7 +433,7 @@ export class ChatWatsonx<
     this.projectId = fields?.projectId;
     this.spaceId = fields?.spaceId;
     this.temperature = fields?.temperature;
-    this.maxRetries = fields?.maxRetries;
+    this.maxRetries = fields?.maxRetries || this.maxRetries;
     this.maxConcurrency = fields?.maxConcurrency;
     this.frequency_penalty = fields?.frequency_penalty;
     this.top_logprobs = fields?.top_logprobs;
@@ -459,6 +445,9 @@ export class ChatWatsonx<
     this.serviceUrl = fields?.serviceUrl;
     this.streaming = fields?.streaming ?? this.streaming;
     this.n = fields?.n ?? this.n;
+    this.modelId = fields?.modelId ?? this.modelId;
+    this.version = fields?.version ?? this.version;
+
     const {
       watsonxAIApikey,
       watsonxAIAuthType,
@@ -603,6 +592,7 @@ export class ChatWatsonx<
           messages: watsonxMessages,
         });
       const { result } = await this.completionWithRetry(callback, options);
+
       const generations: ChatGeneration[] = [];
       for (const part of result.choices) {
         const generation: ChatGeneration = {
@@ -654,13 +644,13 @@ export class ChatWatsonx<
         throw new Error("AbortError");
       }
       const { data } = chunk;
-
       const choice = data.choices[0] as TextChatResultChoice &
         Record<"delta", TextChatResultMessage>;
       if (choice && !("delta" in choice)) {
         continue;
       }
       const delta = choice?.delta;
+
       if (!delta) {
         continue;
       }
@@ -786,7 +776,12 @@ export class ChatWatsonx<
             },
           ],
           // Ideally that would be set to required but this is not supported yet
-          tool_choice_option: "auto",
+          tool_choice: {
+            type: "function",
+            function: {
+              name: functionName,
+            },
+          },
         } as Partial<CallOptions>);
         outputParser = new JsonOutputKeyToolsParser({
           returnSingle: true,
@@ -817,7 +812,12 @@ export class ChatWatsonx<
             },
           ],
           // Ideally that would be set to required but this is not supported yet
-          tool_choice_option: "auto",
+          tool_choice: {
+            type: "function",
+            function: {
+              name: functionName,
+            },
+          },
         } as Partial<CallOptions>);
         outputParser = new JsonOutputKeyToolsParser<RunOutput>({
           returnSingle: true,

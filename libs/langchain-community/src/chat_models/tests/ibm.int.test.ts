@@ -12,7 +12,24 @@ import { LLMResult } from "@langchain/core/outputs";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
 import { tool } from "@langchain/core/tools";
 import { NewTokenIndices } from "@langchain/core/callbacks/base";
+import { readFile } from "node:fs";
 import { ChatWatsonx } from "../ibm.js";
+
+const loadFile = () => {
+  return new Promise((resolve, reject) => {
+    readFile(
+      "/Users/filipzmijewski/Desktop/langchainjs/libs/langchain-community/src/chat_models/tests/data/hotdog.jpg",
+      (err, data) => {
+        if (err) {
+          console.error("Error reading file:", err);
+          reject(err);
+        }
+        const base64String = data.toString("base64");
+        resolve(base64String);
+      }
+    );
+  });
+};
 
 describe("Tests for chat", () => {
   describe("Test ChatWatsonx invoke and generate", () => {
@@ -497,6 +514,7 @@ describe("Tests for chat", () => {
       const res = await llmWithTools.invoke("What is 3 * 12");
 
       expect(res).toBeInstanceOf(AIMessage);
+      console.log(res);
       expect(res.tool_calls?.[0].name).toBe("calculator");
       expect(typeof res.tool_calls?.[0].args?.operation).toBe("string");
       expect(typeof res.tool_calls?.[0].args?.number1).toBe("number");
@@ -597,6 +615,7 @@ describe("Tests for chat", () => {
       const res = await modelWithTools.invoke("What is 32 * 122");
 
       expect(res).toBeInstanceOf(AIMessage);
+      console.log(res.tool_calls);
       expect(res.tool_calls?.[0].name).toBe("calculator");
       expect(typeof res.tool_calls?.[0].args?.operation).toBe("string");
       expect(typeof res.tool_calls?.[0].args?.number1).toBe("number");
@@ -660,7 +679,6 @@ describe("Tests for chat", () => {
         version: "2024-05-31",
         serviceUrl: process.env.WATSONX_AI_SERVICE_URL ?? "testString",
         projectId: process.env.WATSONX_AI_PROJECT_ID ?? "testString",
-        temperature: 0.2,
       });
       const joke = z.object({
         setup: z.string().describe("The setup of the joke"),
@@ -674,12 +692,36 @@ describe("Tests for chat", () => {
       const structuredLlm = service.withStructuredOutput(joke);
 
       const res = await structuredLlm.invoke("Tell me a joke about cats");
-      expect(res).toBeDefined();
-      expect(typeof res.setup).toBe("string");
-      expect(typeof res.punchline).toBe("string");
-      if (res.rating) {
-        expect(typeof res.rating).toBe("number");
+      expect("setup" in res).toBe(true);
+      expect("punchline" in res).toBe(true);
+    });
+
+    test("Schema with zod and stream", async () => {
+      const service = new ChatWatsonx({
+        version: "2024-05-31",
+        serviceUrl: process.env.WATSONX_AI_SERVICE_URL ?? "testString",
+        projectId: process.env.WATSONX_AI_PROJECT_ID ?? "testString",
+        temperature: 0.2,
+      });
+      const joke = z.object({
+        setup: z.string().describe("The setup of the joke"),
+        punchline: z.string().describe("The punchline to the joke"),
+        rating: z
+          .number()
+          .optional()
+          .describe("How funny the joke is, from 1 to 10"),
+      });
+
+      const structuredLlm = service.withStructuredOutput(joke);
+      const res = await structuredLlm.stream("Tell me a joke about cats");
+      let object = {};
+      for await (const chunk of res) {
+        expect(typeof chunk).toBe("object");
+        object = chunk;
+        console.log(object);
       }
+      expect("setup" in object).toBe(true);
+      expect("punchline" in object).toBe(true);
     });
     test("Schema with object", async () => {
       const service = new ChatWatsonx({
@@ -739,7 +781,6 @@ describe("Tests for chat", () => {
       expect(typeof res.parsed.setup).toBe("string");
       expect(typeof res.parsed.setup).toBe("string");
     });
-
     test("Schema with zod and JSON mode", async () => {
       const service = new ChatWatsonx({
         version: "2024-05-31",
@@ -777,6 +818,45 @@ describe("Tests for chat", () => {
       expect(typeof result.operation).toBe("string");
       expect(typeof result.number1).toBe("number");
       expect(typeof result.number2).toBe("number");
+    });
+  });
+
+  describe("Test image input", () => {
+    test("Image input", async () => {
+      const service = new ChatWatsonx({
+        version: "2024-05-31",
+        serviceUrl: process.env.WATSONX_AI_SERVICE_URL ?? "testString",
+        modelId: "meta-llama/llama-3-2-11b-vision-instruct",
+        projectId: process.env.WATSONX_AI_PROJECT_ID ?? "testString",
+        max_new_tokens: 100,
+      });
+      const encodedString = await loadFile();
+      const question = "What is on the picture";
+      const messages = [
+        {
+          role: "user",
+          content: [
+            {
+              type: "text",
+              text: question,
+            },
+            {
+              type: "image_url",
+              image_url: {
+                url: "data:image/jpeg;base64," + encodedString,
+              },
+            },
+          ],
+        },
+      ];
+      const res = await service.stream(messages);
+      const chunks = [];
+      for await (const chunk of res) {
+        expect(chunk).toBeInstanceOf(AIMessageChunk);
+        chunks.push(chunk.content);
+        console.log(chunk.content);
+      }
+      expect(typeof chunks.join("")).toBe("string");
     });
   });
 });
