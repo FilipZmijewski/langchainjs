@@ -45,7 +45,6 @@ import {
 import { WatsonXAI } from "@ibm-cloud/watsonx-ai";
 import {
   convertLangChainToolCallToOpenAI,
-  JsonOutputKeyToolsParser,
   makeInvalidToolCall,
   parseToolCall,
 } from "@langchain/core/output_parsers/openai_tools";
@@ -68,6 +67,7 @@ import { WatsonxAuth, WatsonxParams } from "../types/watsonx_ai.js";
 import {
   _convertToolCallIdToMistralCompatible,
   authenticateAndSetInstance,
+  WatsonxToolsOutputParser,
 } from "../utils/ibm.js";
 
 export interface WatsonxDeltaStream {
@@ -783,7 +783,7 @@ export class ChatWatsonx<
             },
           },
         } as Partial<CallOptions>);
-        outputParser = new JsonOutputKeyToolsParser({
+        outputParser = new WatsonxToolsOutputParser({
           returnSingle: true,
           keyName: functionName,
           zodSchema: schema,
@@ -819,7 +819,7 @@ export class ChatWatsonx<
             },
           },
         } as Partial<CallOptions>);
-        outputParser = new JsonOutputKeyToolsParser<RunOutput>({
+        outputParser = new WatsonxToolsOutputParser<RunOutput>({
           returnSingle: true,
           keyName: functionName,
         });

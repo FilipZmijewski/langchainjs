@@ -5,6 +5,19 @@ import {
   CloudPakForDataAuthenticator,
 } from "ibm-cloud-sdk-core";
 import { WatsonxAuth, WatsonxInit } from "../types/watsonx_ai.js";
+import {
+  JsonOutputKeyToolsParserParams,
+  JsonOutputToolsParser,
+} from "@langchain/core/output_parsers/openai_tools";
+import {
+  BaseLLMOutputParser,
+  OutputParserException,
+} from "@langchain/core/output_parsers";
+import { z } from "zod";
+import { ChatGeneration } from "@langchain/core/outputs";
+import { extractToolCalls } from "./bedrock/anthropic.js";
+import { AIMessageChunk } from "@langchain/core/messages";
+import { ToolCall } from "@langchain/core/messages/tool";
 
 export const authenticateAndSetInstance = ({
   watsonxAIApikey,
@@ -97,5 +110,88 @@ export function _convertToolCallIdToMistralCompatible(
     } else {
       return base62Str.padStart(9, "0");
     }
+  }
+}
+
+interface WatsonxToolsOutputParserParams<T extends Record<string, any>>
+  extends JsonOutputKeyToolsParserParams<T> {}
+
+export class WatsonxToolsOutputParser<
+  T extends Record<string, any> = Record<string, any>
+> extends JsonOutputToolsParser<T> {
+  static lc_name() {
+    return "WatsonxToolsOutputParser";
+  }
+
+  lc_namespace = ["langchain", "watsonx", "output_parsers"];
+
+  returnId = false;
+
+  keyName: string;
+
+  returnSingle = false;
+
+  zodSchema?: z.ZodType<T>;
+
+  latestCorrect?: ToolCall;
+
+  constructor(params: WatsonxToolsOutputParserParams<T>) {
+    super(params);
+    this.keyName = params.keyName;
+    this.returnSingle = params.returnSingle ?? this.returnSingle;
+    this.zodSchema = params.zodSchema;
+  }
+
+  protected async _validateResult(result: unknown): Promise<T> {
+    let parsedResult = result;
+    if (typeof result === "string") {
+      try {
+        parsedResult = JSON.parse(result);
+      } catch (e: any) {
+        throw new OutputParserException(
+          `Failed to parse. Text: "${JSON.stringify(
+            result,
+            null,
+            2
+          )}". Error: ${JSON.stringify(e.message)}`,
+          result
+        );
+      }
+    } else {
+      parsedResult = result;
+    }
+    if (this.zodSchema === undefined) {
+      return parsedResult as T;
+    }
+    const zodParsedResult = await this.zodSchema.safeParseAsync(parsedResult);
+    if (zodParsedResult.success) {
+      return zodParsedResult.data;
+    } else {
+      throw new OutputParserException(
+        `Failed to parse. Text: "${JSON.stringify(
+          result,
+          null,
+          2
+        )}". Error: ${JSON.stringify(zodParsedResult.error.errors)}`,
+        JSON.stringify(result, null, 2)
+      );
+    }
+  }
+
+  async parsePartialResult(generations: ChatGeneration[]): Promise<T> {
+    const tools = generations.flatMap((generation) => {
+      const message = generation.message as AIMessageChunk;
+      if (!Array.isArray(message.tool_calls)) {
+        return [];
+      }
+      const tool = message.tool_calls;
+      return tool;
+    });
+    if (tools[0] === undefined) {
+      if (this.latestCorrect) tools.push(this.latestCorrect);
+    }
+    const [tool] = tools;
+    this.latestCorrect = tool;
+    return tool.args as T;
   }
 }
