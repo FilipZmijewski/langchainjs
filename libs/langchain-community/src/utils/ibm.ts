@@ -4,19 +4,16 @@ import {
   BearerTokenAuthenticator,
   CloudPakForDataAuthenticator,
 } from "ibm-cloud-sdk-core";
-import { WatsonxAuth, WatsonxInit } from "../types/ibm.js";
 import {
   JsonOutputKeyToolsParserParams,
   JsonOutputToolsParser,
 } from "@langchain/core/output_parsers/openai_tools";
-import {
-  BaseLLMOutputParser,
-  OutputParserException,
-} from "@langchain/core/output_parsers";
+import { OutputParserException } from "@langchain/core/output_parsers";
 import { z } from "zod";
 import { ChatGeneration } from "@langchain/core/outputs";
 import { AIMessageChunk } from "@langchain/core/messages";
 import { ToolCall } from "@langchain/core/messages/tool";
+import { WatsonxAuth, WatsonxInit } from "../types/ibm.js";
 
 export const authenticateAndSetInstance = ({
   watsonxAIApikey,

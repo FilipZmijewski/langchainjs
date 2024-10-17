@@ -12,24 +12,10 @@ import { LLMResult } from "@langchain/core/outputs";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
 import { tool } from "@langchain/core/tools";
 import { NewTokenIndices } from "@langchain/core/callbacks/base";
-import { readFile } from "node:fs";
+import * as fs from "node:fs/promises";
+import { fileURLToPath } from "node:url";
+import * as path from "node:path";
 import { ChatWatsonx } from "../ibm.js";
-
-const loadFile = () => {
-  return new Promise((resolve, reject) => {
-    readFile(
-      "/Users/filipzmijewski/Desktop/langchainjs/libs/langchain-community/src/chat_models/tests/data/hotdog.jpg",
-      (err, data) => {
-        if (err) {
-          console.error("Error reading file:", err);
-          reject(err);
-        }
-        const base64String = data.toString("base64");
-        resolve(base64String);
-      }
-    );
-  });
-};
 
 describe("Tests for chat", () => {
   describe("Test ChatWatsonx invoke and generate", () => {
@@ -827,7 +813,11 @@ describe("Tests for chat", () => {
         projectId: process.env.WATSONX_AI_PROJECT_ID ?? "testString",
         max_new_tokens: 100,
       });
-      const encodedString = await loadFile();
+      const __filename = fileURLToPath(import.meta.url);
+      const __dirname = path.dirname(__filename);
+      const encodedString = await fs.readFile(
+        path.join(__dirname, "/data/hotdog.jpg")
+      );
       const question = "What is on the picture";
       const messages = [
         {
@@ -840,7 +830,8 @@ describe("Tests for chat", () => {
             {
               type: "image_url",
               image_url: {
-                url: "data:image/jpeg;base64," + encodedString,
+                url:
+                  "data:image/jpeg;base64," + encodedString.toString("base64"),
               },
             },
           ],

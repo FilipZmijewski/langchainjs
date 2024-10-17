@@ -63,7 +63,7 @@ import {
 import { isZodSchema } from "@langchain/core/utils/types";
 import { zodToJsonSchema } from "zod-to-json-schema";
 import { NewTokenIndices } from "@langchain/core/callbacks/base";
-import { WatsonxAuth, WatsonxParams } from "../types/watsonx_ai.js";
+import { WatsonxAuth, WatsonxParams } from "../types/ibm.js";
 import {
   _convertToolCallIdToMistralCompatible,
   authenticateAndSetInstance,
