@@ -514,7 +514,6 @@ describe("Tests for chat", () => {
       const res = await llmWithTools.invoke("What is 3 * 12");
 
       expect(res).toBeInstanceOf(AIMessage);
-      console.log(res);
       expect(res.tool_calls?.[0].name).toBe("calculator");
       expect(typeof res.tool_calls?.[0].args?.operation).toBe("string");
       expect(typeof res.tool_calls?.[0].args?.number1).toBe("number");
@@ -615,7 +614,6 @@ describe("Tests for chat", () => {
       const res = await modelWithTools.invoke("What is 32 * 122");
 
       expect(res).toBeInstanceOf(AIMessage);
-      console.log(res.tool_calls);
       expect(res.tool_calls?.[0].name).toBe("calculator");
       expect(typeof res.tool_calls?.[0].args?.operation).toBe("string");
       expect(typeof res.tool_calls?.[0].args?.number1).toBe("number");
@@ -718,7 +716,6 @@ describe("Tests for chat", () => {
       for await (const chunk of res) {
         expect(typeof chunk).toBe("object");
         object = chunk;
-        console.log(object);
       }
       expect("setup" in object).toBe(true);
       expect("punchline" in object).toBe(true);
@@ -854,7 +851,6 @@ describe("Tests for chat", () => {
       for await (const chunk of res) {
         expect(chunk).toBeInstanceOf(AIMessageChunk);
         chunks.push(chunk.content);
-        console.log(chunk.content);
       }
       expect(typeof chunks.join("")).toBe("string");
     });
