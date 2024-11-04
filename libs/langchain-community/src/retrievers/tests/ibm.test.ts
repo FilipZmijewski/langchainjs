@@ -59,7 +59,6 @@ describe("Embeddings unit tests", () => {
         maxRetries: 2,
         returnOptions: {
           topN: 5,
-          query: true,
           inputs: false,
         },
       };

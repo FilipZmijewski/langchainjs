@@ -1,10 +1,9 @@
-import { Callbacks } from "@langchain/core/callbacks/manager";
 import { DocumentInterface } from "@langchain/core/documents";
 import { BaseDocumentCompressor } from "@langchain/core/retrievers/document_compressors";
-import { WatsonxAuth, WatsonxParams } from "../types/ibm.js";
-import { authenticateAndSetInstance } from "../utils/ibm.js";
 import { WatsonXAI } from "@ibm-cloud/watsonx-ai";
 import { AsyncCaller } from "@langchain/core/utils/async_caller";
+import { WatsonxAuth, WatsonxParams } from "../types/ibm.js";
+import { authenticateAndSetInstance } from "../utils/ibm.js";
 
 export interface WatsonxInputRerank extends Omit<WatsonxParams, "idOrName"> {
   truncateInputTokens?: number;
@@ -18,16 +17,25 @@ export class WatsonxRerank
   implements WatsonxInputRerank
 {
   maxRetries = 0;
+
   version = "2024-05-31";
+
   truncateInputTokens?: number | undefined;
+
   returnOptions?:
     | { topN?: number; inputs?: boolean; query?: boolean }
     | undefined;
+
   model: string;
+
   spaceId?: string | undefined;
+
   projectId?: string | undefined;
+
   maxConcurrency?: number | undefined;
+
   serviceUrl: string;
+
   service: WatsonXAI;
 
   constructor(fields: WatsonxInputRerank & WatsonxAuth) {
@@ -79,6 +87,7 @@ export class WatsonxRerank
       return { projectId: this.projectId, modelId: this.model };
     else return { spaceId: this.spaceId, modelId: this.model };
   }
+
   invocationParams(options?: Partial<WatsonxInputRerank>) {
     return {
       truncate_input_tokens:
@@ -143,11 +152,16 @@ export class WatsonxRerank
       })
     );
     const response = result.results.map((document) => {
-      return {
-        index: document.index,
-        relevanceScore: document.score,
-        input: document?.input,
-      };
+      return document?.input
+        ? {
+            index: document.index,
+            relevanceScore: document.score,
+            input: document?.input,
+          }
+        : {
+            index: document.index,
+            relevanceScore: document.score,
+          };
     });
     return response;
   }
