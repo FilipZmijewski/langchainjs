@@ -428,6 +428,7 @@ export const config = {
     "retrievers/amazon_kendra",
     "retrievers/amazon_knowledge_base",
     "retrievers/dria",
+    "retrievers/ibm",
     "retrievers/metal",
     "retrievers/supabase",
     "retrievers/vectara_summary",
