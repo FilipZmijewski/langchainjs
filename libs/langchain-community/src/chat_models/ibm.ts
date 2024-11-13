@@ -60,6 +60,7 @@ import {
   BaseLLMOutputParser,
   JsonOutputParser,
   StructuredOutputParser,
+  TextChatToolChoiceTool
 } from "@langchain/core/output_parsers";
 import { isZodSchema } from "@langchain/core/utils/types";
 import { zodToJsonSchema } from "zod-to-json-schema";
