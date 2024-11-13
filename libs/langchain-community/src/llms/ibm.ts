@@ -383,8 +383,6 @@ export class WatsonxLLM<
           if (options.signal?.aborted) {
             throw new Error("AbortError");
           }
-          const callback = () =>
-            this.generateSingleMessage(prompt, options, true);
 
           const stream = this._streamResponseChunks(prompt, options);
           const geneartionsArray: GenerationInfo[] = [];
