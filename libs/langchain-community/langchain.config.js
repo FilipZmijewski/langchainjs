@@ -262,6 +262,7 @@ export const config = {
     "indexes/memory": "indexes/memory",
     "indexes/sqlite": "indexes/sqlite",
     // document_loaders
+    "document_loaders/web/airtable": "document_loaders/web/airtable",
     "document_loaders/web/apify_dataset": "document_loaders/web/apify_dataset",
     "document_loaders/web/assemblyai": "document_loaders/web/assemblyai",
     "document_loaders/web/azure_blob_storage_container":
