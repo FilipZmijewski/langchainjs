@@ -41,8 +41,8 @@ import {
   TextChatResultChoice,
   TextChatResultMessage,
   TextChatToolCall,
-  TextChatUsage,
   TextChatToolChoiceTool,
+  TextChatUsage,
 } from "@ibm-cloud/watsonx-ai/dist/watsonx-ai-ml/vml_v1.js";
 import { WatsonXAI } from "@ibm-cloud/watsonx-ai";
 import {
