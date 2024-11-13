@@ -42,6 +42,7 @@ import {
   TextChatResultMessage,
   TextChatToolCall,
   TextChatUsage,
+  TextChatToolChoiceTool,
 } from "@ibm-cloud/watsonx-ai/dist/watsonx-ai-ml/vml_v1.js";
 import { WatsonXAI } from "@ibm-cloud/watsonx-ai";
 import {
@@ -60,7 +61,6 @@ import {
   BaseLLMOutputParser,
   JsonOutputParser,
   StructuredOutputParser,
-  TextChatToolChoiceTool
 } from "@langchain/core/output_parsers";
 import { isZodSchema } from "@langchain/core/utils/types";
 import { zodToJsonSchema } from "zod-to-json-schema";
