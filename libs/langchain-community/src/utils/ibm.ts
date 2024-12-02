@@ -15,6 +15,20 @@ import { ChatGeneration } from "@langchain/core/outputs";
 import { AIMessageChunk } from "@langchain/core/messages";
 import { ToolCall } from "@langchain/core/messages/tool";
 import { WatsonxAuth, WatsonxInit } from "../types/ibm.js";
+import {
+  CallbackManager,
+  CallbackManagerForLLMRun,
+} from "@langchain/core/callbacks/manager";
+import {
+  CallbackHandler,
+  InvokeRequestCallback,
+  RecieveResponseCallback,
+  RequestCallbacks,
+} from "@ibm-cloud/watsonx-ai/dist/watsonx-ai-ml/vml_v1.js";
+import {
+  BaseCallbackHandler,
+  CallbackHandlerMethods,
+} from "@langchain/core/callbacks/base";
 
 export const authenticateAndSetInstance = ({
   watsonxAIApikey,
@@ -191,4 +205,71 @@ export class WatsonxToolsOutputParser<
     this.latestCorrect = tool;
     return tool.args as T;
   }
+}
+
+type RequestCallbackKeys = keyof RequestCallbacks;
+export class WatsonxCallbackManager extends CallbackManager {
+  constructor(
+    parentRunId: string | undefined,
+    callbackManager: CallbackManager
+  ) {
+    super(parentRunId, { ...callbackManager });
+  }
+  static fromHandlers(
+    handlers: CallbackHandlerMethods & RequestCallbacks
+  ): WatsonxCallbackManager {
+    const watsonxCallbackNames: RequestCallbackKeys[] = [
+      "responseCallback",
+      "requestCallback",
+    ];
+    const watsonxHandlers: Partial<
+      Record<
+        RequestCallbackKeys,
+        InvokeRequestCallback | RecieveResponseCallback
+      >
+    > = {};
+    watsonxCallbackNames.forEach((item) => {
+      watsonxHandlers[item] = handlers[item];
+      delete handlers[item];
+    });
+    const manager = super.fromHandlers(handlers);
+    class WatsonxHandler extends BaseCallbackHandler {
+      name = "watsonxHandler";
+      requestCallback: InvokeRequestCallback;
+      responseCallback: RecieveResponseCallback;
+      constructor() {
+        super();
+        Object.assign(this, watsonxHandlers);
+      }
+      get watsonxHandlers() {
+        return {
+          requestCallback: this.requestCallback,
+          responseCallback: this.responseCallback,
+        };
+      }
+    }
+    manager.addHandler(new WatsonxHandler());
+    return manager;
+  }
+}
+
+export class WatsonxBaseCallbackHandler extends BaseCallbackHandler {
+  name: string;
+  constructor() {
+    super();
+  }
+  requestCallback: InvokeRequestCallback;
+  responseCallback: RecieveResponseCallback;
+
+  get watsonxHandlers() {
+    if (this.name === "watsonxHandler")
+      return {
+        requestCallback: this.requestCallback,
+        responseCallback: this.responseCallback,
+      };
+    else return undefined;
+  }
+}
+export class WatsonxCallbackManagerForLLMRun extends CallbackManagerForLLMRun {
+  declare handlers: WatsonxBaseCallbackHandler[];
 }
