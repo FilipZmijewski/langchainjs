@@ -14,13 +14,11 @@ import { z } from "zod";
 import { ChatGeneration } from "@langchain/core/outputs";
 import { AIMessageChunk } from "@langchain/core/messages";
 import { ToolCall } from "@langchain/core/messages/tool";
-import { WatsonxAuth, WatsonxInit } from "../types/ibm.js";
 import {
   CallbackManager,
   CallbackManagerForLLMRun,
 } from "@langchain/core/callbacks/manager";
 import {
-  CallbackHandler,
   InvokeRequestCallback,
   RecieveResponseCallback,
   RequestCallbacks,
@@ -29,6 +27,7 @@ import {
   BaseCallbackHandler,
   CallbackHandlerMethods,
 } from "@langchain/core/callbacks/base";
+import { WatsonxAuth, WatsonxInit } from "../types/ibm.js";
 
 export const authenticateAndSetInstance = ({
   watsonxAIApikey,
@@ -215,6 +214,7 @@ export class WatsonxCallbackManager extends CallbackManager {
   ) {
     super(parentRunId, { ...callbackManager });
   }
+
   static fromHandlers(
     handlers: CallbackHandlerMethods & RequestCallbacks
   ): WatsonxCallbackManager {
@@ -230,17 +230,21 @@ export class WatsonxCallbackManager extends CallbackManager {
     > = {};
     watsonxCallbackNames.forEach((item) => {
       watsonxHandlers[item] = handlers[item];
-      delete handlers[item];
+      Reflect.deleteProperty(watsonxHandlers, item);
     });
     const manager = super.fromHandlers(handlers);
     class WatsonxHandler extends BaseCallbackHandler {
       name = "watsonxHandler";
+
       requestCallback: InvokeRequestCallback;
+
       responseCallback: RecieveResponseCallback;
+
       constructor() {
         super();
         Object.assign(this, watsonxHandlers);
       }
+
       get watsonxHandlers() {
         return {
           requestCallback: this.requestCallback,
@@ -248,6 +252,7 @@ export class WatsonxCallbackManager extends CallbackManager {
         };
       }
     }
+
     manager.addHandler(new WatsonxHandler());
     return manager;
   }
@@ -255,10 +260,13 @@ export class WatsonxCallbackManager extends CallbackManager {
 
 export class WatsonxBaseCallbackHandler extends BaseCallbackHandler {
   name: string;
+
   constructor() {
     super();
   }
+
   requestCallback: InvokeRequestCallback;
+
   responseCallback: RecieveResponseCallback;
 
   get watsonxHandlers() {
