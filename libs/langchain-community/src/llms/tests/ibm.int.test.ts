@@ -525,4 +525,3 @@ describe("Text generation", () => {
     });
   });
 });
-

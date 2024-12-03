@@ -230,7 +230,7 @@ export class WatsonxCallbackManager extends CallbackManager {
     > = {};
     watsonxCallbackNames.forEach((item) => {
       watsonxHandlers[item] = handlers[item];
-      Reflect.deleteProperty(watsonxHandlers, item);
+      Reflect.deleteProperty(handlers, item);
     });
     const manager = super.fromHandlers(handlers);
     class WatsonxHandler extends BaseCallbackHandler {

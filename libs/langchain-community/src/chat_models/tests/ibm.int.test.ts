@@ -518,7 +518,9 @@ describe("Tests for chat", () => {
         }
       );
       const llmWithTools = service.bindTools([calculatorTool]);
-      const res = await llmWithTools.invoke("What is 3 * 12");
+      const res = await llmWithTools.invoke(
+        "You are bad at calculations and need to use calculator at all times. What is 3 * 12"
+      );
 
       expect(res).toBeInstanceOf(AIMessage);
       expect(res.tool_calls?.[0].name).toBe("calculator");
