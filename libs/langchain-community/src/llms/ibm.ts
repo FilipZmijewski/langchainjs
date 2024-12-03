@@ -276,7 +276,7 @@ export class WatsonxLLM<
   private async generateSingleMessage(
     input: string,
     options: this["ParsedCallOptions"],
-    stream: boolean,
+    stream: true | false,
     handlers?: WatsonXAI.RequestCallbacks
   ) {
     const {
@@ -316,7 +316,10 @@ export class WatsonxLLM<
             },
             handlers
           );
-      return textStream;
+
+      return textStream as AsyncIterable<
+        WatsonXAI.ObjectStreamed<WatsonXAI.TextGenResponse>
+      >;
     } else {
       const textGenerationPromise = idOrName
         ? this.service.deploymentGenerateText(

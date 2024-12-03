@@ -20,7 +20,7 @@ import {
 } from "@langchain/core/callbacks/manager";
 import {
   InvokeRequestCallback,
-  RecieveResponseCallback,
+  ReceiveResponseCallback,
   RequestCallbacks,
 } from "@ibm-cloud/watsonx-ai/dist/watsonx-ai-ml/vml_v1.js";
 import {
@@ -225,7 +225,7 @@ export class WatsonxCallbackManager extends CallbackManager {
     const watsonxHandlers: Partial<
       Record<
         RequestCallbackKeys,
-        InvokeRequestCallback | RecieveResponseCallback
+        InvokeRequestCallback | ReceiveResponseCallback
       >
     > = {};
     watsonxCallbackNames.forEach((item) => {
@@ -238,7 +238,7 @@ export class WatsonxCallbackManager extends CallbackManager {
 
       requestCallback: InvokeRequestCallback;
 
-      responseCallback: RecieveResponseCallback;
+      responseCallback: ReceiveResponseCallback;
 
       constructor() {
         super();
@@ -267,7 +267,7 @@ export class WatsonxBaseCallbackHandler extends BaseCallbackHandler {
 
   requestCallback: InvokeRequestCallback;
 
-  responseCallback: RecieveResponseCallback;
+  responseCallback: ReceiveResponseCallback;
 
   get watsonxHandlers() {
     if (this.name === "watsonxHandler")
