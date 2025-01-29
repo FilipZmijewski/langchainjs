@@ -10669,15 +10669,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@ibm-cloud/watsonx-ai@npm:^1.3.2":
-  version: 1.3.2
-  resolution: "@ibm-cloud/watsonx-ai@npm:1.3.2"
+"@ibm-cloud/watsonx-ai@npm:^1.4.0":
+  version: 1.4.0
+  resolution: "@ibm-cloud/watsonx-ai@npm:1.4.0"
   dependencies:
     "@langchain/textsplitters": ^0.1.0
     "@types/node": ^18.0.0
     extend: 3.0.2
     ibm-cloud-sdk-core: ^5.0.2
-  checksum: 4cca7b7d0819be5a49c74cd98319dbff6e2401169016f0e3a92affde00f11664ad1a64afec948d3f17ae5d5591315d3fe6a778c5999636649221acf853846887
+  checksum: 5250816f9ad93839cf26e3788eeace8155721765c39c65547eff8ebbd5fc8a0dfa107f6e799593f1209f4b3489be24aa674aa92b7ecbc5fc2bd29390a28e84ff
   languageName: node
   linkType: hard
 
@@ -11900,7 +11900,7 @@ __metadata:
     "@gradientai/nodejs-sdk": ^1.2.0
     "@huggingface/inference": ^2.6.4
     "@huggingface/transformers": ^3.2.3
-    "@ibm-cloud/watsonx-ai": ^1.3.2
+    "@ibm-cloud/watsonx-ai": ^1.4.0
     "@jest/globals": ^29.5.0
     "@lancedb/lancedb": ^0.13.0
     "@langchain/core": "workspace:*"
