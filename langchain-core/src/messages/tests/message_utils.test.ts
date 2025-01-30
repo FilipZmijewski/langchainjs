@@ -6,9 +6,11 @@ import {
   trimMessages,
 } from "../transformers.js";
 import { AIMessage, AIMessageChunk } from "../ai.js";
+import { AIMessage, AIMessageChunk } from "../ai.js";
 import { ChatMessage } from "../chat.js";
 import { HumanMessage } from "../human.js";
 import { SystemMessage } from "../system.js";
+import { ToolMessage } from "../tool.js";
 import { ToolMessage } from "../tool.js";
 import { BaseMessage } from "../base.js";
 import {
@@ -189,6 +191,7 @@ describe("trimMessages can trim", () => {
             defaultMsgSuffixLen;
         }
       }
+      console.log(count);
       console.log(count);
       return count;
     };
@@ -433,6 +436,7 @@ describe("trimMessages can trim", () => {
 
   it("Last 30 tokens, including system message, allowing partial messages, end on HumanMessage", async () => {
     const { messages, dummyTokenCounter } = messagesAndTokenCounterFactory();
+    console.log(messages);
     console.log(messages);
     const trimmedMessages = await trimMessages(messages, {
       maxTokens: 30,

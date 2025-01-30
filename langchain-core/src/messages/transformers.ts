@@ -276,6 +276,7 @@ function _mergeMessageRuns(messages: BaseMessage[]): BaseMessage[] {
   const merged: BaseMessage[] = [];
   for (const msg of messages) {
     const curr = msg;
+    const curr = msg;
     const last = merged.pop();
     if (!last) {
       merged.push(curr);
@@ -881,7 +882,10 @@ async function _lastMaxTokens(
     while (
       messagesCopy.length > 0 &&
       !_isMessageType(messagesCopy[messagesCopy.length - 1], endOnArr)
+      messagesCopy.length > 0 &&
+      !_isMessageType(messagesCopy[messagesCopy.length - 1], endOnArr)
     ) {
+      messagesCopy = messagesCopy.slice(0, -1);
       messagesCopy = messagesCopy.slice(0, -1);
     }
   }
@@ -889,6 +893,8 @@ async function _lastMaxTokens(
   const swappedSystem =
     includeSystem && messagesCopy[0]?.getType() === "system";
   let reversed_ = swappedSystem
+    ? messagesCopy.slice(0, 1).concat(messagesCopy.slice(1).reverse())
+    : messagesCopy.reverse();
     ? messagesCopy.slice(0, 1).concat(messagesCopy.slice(1).reverse())
     : messagesCopy.reverse();
 
