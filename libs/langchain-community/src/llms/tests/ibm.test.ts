@@ -1,11 +1,7 @@
 /* eslint-disable no-process-env */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import WatsonxAiMlVml_v1 from "@ibm-cloud/watsonx-ai/dist/watsonx-ai-ml/vml_v1.js";
-import {
-  WatsonxLLM,
-  WatsonxInputLLM,
-  WatsonxDeployedInputLLM,
-} from "../ibm.js";
+import { WatsonxLLM, WatsonxInputLLM, WatsonxLLMConstructor } from "../ibm.js";
 import { authenticateAndSetInstance } from "../../utils/ibm.js";
 import { WatsonxEmbeddings } from "../../embeddings/ibm.js";
 
@@ -18,7 +14,7 @@ export function getKey<K>(key: K): K {
 }
 export const testProperties = (
   instance: WatsonxLLM | WatsonxEmbeddings,
-  testProps: WatsonxInputLLM | WatsonxDeployedInputLLM,
+  testProps: WatsonxLLMConstructor,
   notExTestProps?: { [key: string]: any }
 ) => {
   const checkProperty = <T extends { [key: string]: any }>(

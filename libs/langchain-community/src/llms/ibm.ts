@@ -3,7 +3,6 @@ import { CallbackManagerForLLMRun } from "@langchain/core/callbacks/manager";
 import { BaseLLM, BaseLLMParams } from "@langchain/core/language_models/llms";
 import { WatsonXAI } from "@ibm-cloud/watsonx-ai";
 import {
-  DeploymentTextGenProperties,
   RequestCallbacks,
   ReturnOptionProperties,
   TextGenLengthPenalty,
