@@ -80,7 +80,7 @@ describe("LLM unit tests", () => {
         serviceUrl: process.env.WATSONX_AI_SERVICE_URL as string,
         projectId: process.env.WATSONX_AI_PROJECT_ID || "testString",
       };
-      const instance = new ChatWatsonx({ ...testProps });
+      const instance = new ChatWatsonx({ ...testProps, ...fakeAuthProp });
 
       testProperties(instance, testProps);
     });
@@ -92,7 +92,7 @@ describe("LLM unit tests", () => {
         serviceUrl: process.env.WATSONX_AI_SERVICE_URL as string,
         spaceId: process.env.WATSONX_AI_SPACE_ID || "testString",
       };
-      const instance = new ChatWatsonx({ ...testProps });
+      const instance = new ChatWatsonx({ ...testProps, ...fakeAuthProp });
 
       testProperties(instance, testProps);
     });
