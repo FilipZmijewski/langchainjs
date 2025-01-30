@@ -10669,14 +10669,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@ibm-cloud/watsonx-ai@npm:^1.3.0":
-  version: 1.3.0
-  resolution: "@ibm-cloud/watsonx-ai@npm:1.3.0"
+"@ibm-cloud/watsonx-ai@npm:^1.4.0":
+  version: 1.4.0
+  resolution: "@ibm-cloud/watsonx-ai@npm:1.4.0"
   dependencies:
+    "@langchain/textsplitters": ^0.1.0
     "@types/node": ^18.0.0
     extend: 3.0.2
     ibm-cloud-sdk-core: ^5.0.2
-  checksum: 6a2127391ca70005b942d3c4ab1abc738946c42bbf3ee0f8eb6f778434b5f8806d622f1f36446f00b9fb82dc2c8aea3526426ec46cc53fa8a075ba7a294da096
+  checksum: 5250816f9ad93839cf26e3788eeace8155721765c39c65547eff8ebbd5fc8a0dfa107f6e799593f1209f4b3489be24aa674aa92b7ecbc5fc2bd29390a28e84ff
   languageName: node
   linkType: hard
 
@@ -11899,7 +11900,7 @@ __metadata:
     "@gradientai/nodejs-sdk": ^1.2.0
     "@huggingface/inference": ^2.6.4
     "@huggingface/transformers": ^3.2.3
-    "@ibm-cloud/watsonx-ai": ^1.3.0
+    "@ibm-cloud/watsonx-ai": ^1.4.0
     "@jest/globals": ^29.5.0
     "@lancedb/lancedb": ^0.13.0
     "@langchain/core": "workspace:*"
@@ -12010,7 +12011,7 @@ __metadata:
     jsdom: ^22.1.0
     jsonwebtoken: ^9.0.2
     langchain: ">=0.2.3 <0.3.0 || >=0.3.4 <0.4.0"
-    langsmith: ^0.2.8
+    langsmith: ">=0.2.8 <0.4.0"
     llmonitor: ^0.5.9
     lodash: ^4.17.21
     lunary: ^0.7.10
@@ -12448,7 +12449,7 @@ __metadata:
     jest: ^29.5.0
     jest-environment-node: ^29.6.4
     js-tiktoken: ^1.0.12
-    langsmith: ^0.2.8
+    langsmith: ">=0.2.8 <0.4.0"
     ml-matrix: ^6.10.4
     mustache: ^4.2.0
     p-queue: ^6.6.2
@@ -13188,7 +13189,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@langchain/textsplitters@>=0.0.0 <0.2.0, @langchain/textsplitters@workspace:*, @langchain/textsplitters@workspace:libs/langchain-textsplitters":
+"@langchain/textsplitters@>=0.0.0 <0.2.0, @langchain/textsplitters@^0.1.0, @langchain/textsplitters@workspace:*, @langchain/textsplitters@workspace:libs/langchain-textsplitters":
   version: 0.0.0-use.local
   resolution: "@langchain/textsplitters@workspace:libs/langchain-textsplitters"
   dependencies:
@@ -27852,7 +27853,7 @@ __metadata:
     ioredis: ^5.3.2
     js-yaml: ^4.1.0
     langchain: "workspace:*"
-    langsmith: ^0.2.8
+    langsmith: ">=0.2.8 <0.4.0"
     mongodb: ^6.3.0
     pg: ^8.11.0
     pickleparser: ^0.2.1
@@ -33464,7 +33465,7 @@ __metadata:
     js-tiktoken: ^1.0.12
     js-yaml: ^4.1.0
     jsonpointer: ^5.0.1
-    langsmith: ^0.2.8
+    langsmith: ">=0.2.8 <0.4.0"
     openai: ^4.41.1
     openapi-types: ^12.1.3
     p-retry: 4
@@ -33549,9 +33550,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"langsmith@npm:^0.2.8":
-  version: 0.2.8
-  resolution: "langsmith@npm:0.2.8"
+"langsmith@npm:>=0.2.8 <0.4.0":
+  version: 0.2.15
+  resolution: "langsmith@npm:0.2.15"
   dependencies:
     "@types/uuid": ^10.0.0
     commander: ^10.0.1
@@ -33564,7 +33565,7 @@ __metadata:
   peerDependenciesMeta:
     openai:
       optional: true
-  checksum: 8695df08a09b9885b0308c66fbf9802edbe20e286fec3db8faa75ed1893a7aafae014441e311677bb60abb33af49da7f7d8404f55fffbdad5aec61cf65215fc8
+  checksum: 72dbc86c72e186b3228ec754abc1c98fd17e62aee337375c228ba83da6dd6aaa0eea0acb0ca2c754e6c33f69ab0e11d39a122a7e51b6b33100ce95395aa57e9a
   languageName: node
   linkType: hard
 
