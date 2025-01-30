@@ -1,7 +1,11 @@
 /* eslint-disable no-process-env */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import WatsonxAiMlVml_v1 from "@ibm-cloud/watsonx-ai/dist/watsonx-ai-ml/vml_v1.js";
-import { WatsonxLLM, WatsonxInputLLM } from "../ibm.js";
+import {
+  WatsonxLLM,
+  WatsonxInputLLM,
+  WatsonxDeployedInputLLM,
+} from "../ibm.js";
 import { authenticateAndSetInstance } from "../../utils/ibm.js";
 import { WatsonxEmbeddings } from "../../embeddings/ibm.js";
 
@@ -14,7 +18,7 @@ export function getKey<K>(key: K): K {
 }
 export const testProperties = (
   instance: WatsonxLLM | WatsonxEmbeddings,
-  testProps: WatsonxInputLLM,
+  testProps: WatsonxInputLLM | WatsonxDeployedInputLLM,
   notExTestProps?: { [key: string]: any }
 ) => {
   const checkProperty = <T extends { [key: string]: any }>(
@@ -57,6 +61,17 @@ describe("LLM unit tests", () => {
         version: "2024-05-31",
         serviceUrl: process.env.WATSONX_AI_SERVICE_URL as string,
         projectId: process.env.WATSONX_AI_PROJECT_ID || "testString",
+      };
+      const instance = new WatsonxLLM({ ...testProps, ...fakeAuthProp });
+
+      testProperties(instance, testProps);
+    });
+
+    test("Test basic properties after init", async () => {
+      const testProps = {
+        version: "2024-05-31",
+        serviceUrl: process.env.WATSONX_AI_SERVICE_URL as string,
+        idOrName: process.env.WATSONX_AI_PROJECT_ID || "testString",
       };
       const instance = new WatsonxLLM({ ...testProps, ...fakeAuthProp });
 
