@@ -47,7 +47,6 @@ class ChatWatsonxStandardIntegrationTests extends ChatModelIntegrationTests<
 
 const testClass = new ChatWatsonxStandardIntegrationTests();
 
-
 test("ChatWatsonxStandardIntegrationTests", async () => {
   const testResults = await testClass.runTests();
   expect(testResults).toBe(true);
