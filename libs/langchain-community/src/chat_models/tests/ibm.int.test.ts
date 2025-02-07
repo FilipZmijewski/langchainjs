@@ -12,8 +12,9 @@ import { LLMResult } from "@langchain/core/outputs";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
 import { tool } from "@langchain/core/tools";
 import { NewTokenIndices } from "@langchain/core/callbacks/base";
-import { ChatWatsonx } from "../ibm.js";
 import { createReactAgent } from "@langchain/langgraph/prebuilt";
+import { ChatWatsonx } from "../ibm.js";
+
 describe("Tests for chat", () => {
   describe("Test ChatWatsonx invoke and generate", () => {
     test("Basic invoke with projectId", async () => {
