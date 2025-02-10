@@ -12,11 +12,11 @@ import { LLMResult } from "@langchain/core/outputs";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
 import { tool } from "@langchain/core/tools";
 import { NewTokenIndices } from "@langchain/core/callbacks/base";
-import { ChatWatsonx } from "../ibm.js";
 import {
   BaseChatModel,
   BaseChatModelCallOptions,
 } from "@langchain/core/language_models/chat_models";
+import { ChatWatsonx } from "../ibm.js";
 
 describe("Tests for chat", () => {
   describe("Test ChatWatsonx invoke and generate", () => {
@@ -729,6 +729,7 @@ describe("Tests for chat", () => {
       const testModel = (
         model: BaseChatModel<BaseChatModelCallOptions, AIMessageChunk>
       ) => {
+        // eslint-disable-next-line no-instanceof/no-instanceof
         if (model instanceof BaseChatModel) return true;
         else throw new Error("Wrong model passed");
       };
