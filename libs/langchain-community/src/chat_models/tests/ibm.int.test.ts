@@ -714,8 +714,8 @@ describe("Tests for chat", () => {
           name: "multiply",
           description: "Multiplies a and b.",
           schema: z.object({
-            a: z.string(),
-            b: z.string(),
+            a: z.number(),
+            b: z.number(),
           }),
         }
       );
@@ -758,7 +758,7 @@ describe("Tests for chat", () => {
 
       const multiplyTool = tool(
         async (input) => {
-          return input.a * input.b;
+          return Number(input.a) * Number(input.b);
         },
         {
           name: "multiply",
