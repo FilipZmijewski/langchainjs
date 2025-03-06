@@ -717,8 +717,8 @@ describe("Tests for chat", () => {
           name: "multiply",
           description: "Multiplies a and b.",
           schema: z.object({
-            a: z.string(),
-            b: z.string(),
+            a: z.number(),
+            b: z.number(),
           }),
         }
       );
