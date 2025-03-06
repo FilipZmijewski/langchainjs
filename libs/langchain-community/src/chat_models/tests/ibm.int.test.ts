@@ -16,8 +16,8 @@ import {
   BaseChatModel,
   BaseChatModelCallOptions,
 } from "@langchain/core/language_models/chat_models";
-import { ChatWatsonx } from "../ibm.js";
 import { concat } from "@langchain/core/utils/stream";
+import { ChatWatsonx } from "../ibm.js";
 
 describe("Tests for chat", () => {
   describe("Test ChatWatsonx invoke and generate", () => {
@@ -777,7 +777,7 @@ describe("Tests for chat", () => {
         ),
       ];
       const res = await modelWithTools.stream(messages);
-      let toolMessage: AIMessageChunk | undefined = undefined;
+      let toolMessage: AIMessageChunk | undefined;
       for await (const chunk of res) {
         toolMessage =
           toolMessage !== undefined ? concat(toolMessage, chunk) : chunk;
