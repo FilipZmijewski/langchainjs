@@ -8,9 +8,9 @@ import {
   StructuredToolInterface,
   ToolInterface,
 } from "@langchain/core/tools";
+import { z } from "zod";
 import { authenticateAndSetInstance, jsonSchemaToZod } from "../utils/ibm.js";
 import { WatsonxAuth, WatsonxInit } from "../types/ibm.js";
-import { z } from "zod";
 
 export interface WatsonxToolParams {
   name: string;
