@@ -4,12 +4,13 @@ import {
 } from "@ibm-cloud/watsonx-ai";
 import {
   BaseToolkit,
+  StructuredTool,
   StructuredToolInterface,
-  Tool,
   ToolInterface,
 } from "@langchain/core/tools";
 import { authenticateAndSetInstance, jsonSchemaToZod } from "../utils/ibm.js";
 import { WatsonxAuth, WatsonxInit } from "../types/ibm.js";
+import { z } from "zod";
 
 export interface WatsonxToolParams {
   name: string;
@@ -18,7 +19,7 @@ export interface WatsonxToolParams {
   schema?: Record<string, any>;
   service?: WatsonXAI;
 }
-export class WatsonxTool extends Tool implements WatsonxToolParams {
+export class WatsonxTool extends StructuredTool implements WatsonxToolParams {
   name: string;
 
   description: string;
@@ -26,6 +27,8 @@ export class WatsonxTool extends Tool implements WatsonxToolParams {
   agent_description?: string;
 
   service?: WatsonXAI;
+
+  schema: z.ZodObject<any>;
 
   constructor(fields: WatsonXAI.TextChatParameterFunction, service: WatsonXAI) {
     super();
@@ -87,14 +90,14 @@ export class WatsonxToolkit extends BaseToolkit {
 
   protected async loadTools() {
     const { result: tools } = await this.service.listUtilityAgentTools();
-
-    this.tools = tools.resources
+    const validTools: WatsonxTool[] = tools.resources
       .map((tool) => {
         const { function: watsonxTool } = convertUtilityToolToWatsonxTool(tool);
         if (watsonxTool) return new WatsonxTool(watsonxTool, this.service);
         else return undefined;
       })
-      .filter((item) => !!item);
+      .filter((item): item is WatsonxTool => item !== undefined);
+    this.tools = validTools;
   }
 
   static async init(props: WatsonxAuth & WatsonxInit) {
