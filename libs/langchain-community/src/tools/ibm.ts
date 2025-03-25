@@ -26,7 +26,7 @@ export class WatsonxTool extends StructuredTool implements WatsonxToolParams {
 
   agent_description?: string;
 
-  service?: WatsonXAI;
+  service: WatsonXAI;
 
   schema: z.ZodObject<any>;
 
@@ -41,7 +41,7 @@ export class WatsonxTool extends StructuredTool implements WatsonxToolParams {
 
   protected async _call(inputObject: Record<string, any>): Promise<string> {
     const { input, ...args } = inputObject;
-    const response = await this.service?.runUtilityAgentToolByName({
+    const response = await this.service.runUtilityAgentToolByName({
       toolId: this.name,
       wxUtilityAgentToolsRunRequest: {
         input: input ?? args,
@@ -90,14 +90,13 @@ export class WatsonxToolkit extends BaseToolkit {
 
   protected async loadTools() {
     const { result: tools } = await this.service.listUtilityAgentTools();
-    const validTools: WatsonxTool[] = tools.resources
+    this.tools = tools.resources
       .map((tool) => {
         const { function: watsonxTool } = convertUtilityToolToWatsonxTool(tool);
         if (watsonxTool) return new WatsonxTool(watsonxTool, this.service);
         else return undefined;
       })
       .filter((item): item is WatsonxTool => item !== undefined);
-    this.tools = validTools;
   }
 
   static async init(props: WatsonxAuth & WatsonxInit) {
