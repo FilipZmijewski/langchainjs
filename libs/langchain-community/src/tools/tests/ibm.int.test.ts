@@ -1,5 +1,6 @@
-import { WatsonxTool, WatsonxToolkit } from "../ibm.js";
+/* eslint-disable no-process-env */
 import { WatsonXAI } from "@ibm-cloud/watsonx-ai";
+import { WatsonxTool, WatsonxToolkit } from "../ibm.js";
 
 const serviceUrl = process.env.WATSONX_AI_SERVICE_URL as string;
 describe("Tool class tests", () => {

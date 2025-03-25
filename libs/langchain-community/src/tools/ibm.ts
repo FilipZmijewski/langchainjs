@@ -26,6 +26,7 @@ export class WatsonxTool extends Tool implements WatsonxToolParams {
   agent_description?: string;
 
   service?: WatsonXAI;
+
   constructor(fields: WatsonXAI.TextChatParameterFunction, service: WatsonXAI) {
     super();
 
@@ -34,6 +35,7 @@ export class WatsonxTool extends Tool implements WatsonxToolParams {
     this.schema = jsonSchemaToZod(fields?.parameters);
     this.service = service;
   }
+
   protected async _call(inputObject: Record<string, any>): Promise<string> {
     const { input, ...args } = inputObject;
     const response = await this.service?.runUtilityAgentToolByName({
@@ -46,14 +48,15 @@ export class WatsonxTool extends Tool implements WatsonxToolParams {
     });
 
     const result = response?.result.output;
-    return new Promise((resolve) =>
-      resolve(result ?? "Sorry, the tool did not work as expected")
-    );
+    return new Promise((resolve) => {
+      resolve(result ?? "Sorry, the tool did not work as expected");
+    });
   }
 }
 
 export class WatsonxToolkit extends BaseToolkit {
   tools: ToolInterface[];
+
   service: WatsonXAI;
 
   constructor(fields: WatsonxAuth & WatsonxInit) {
@@ -93,6 +96,7 @@ export class WatsonxToolkit extends BaseToolkit {
       })
       .filter((item) => !!item);
   }
+
   static async init(props: WatsonxAuth & WatsonxInit) {
     const instance = new WatsonxToolkit({ ...props });
     await instance.loadTools();

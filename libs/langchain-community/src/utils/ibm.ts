@@ -205,15 +205,15 @@ export function jsonSchemaToZod(obj: Record<string, any> | undefined) {
   if (obj && obj.type === "object") {
     const shape: Record<string, any> = {};
 
-    for (const key in obj.properties) {
+    Object.keys(obj.properties).forEach((key) => {
       const prop = obj.properties[key];
 
       let zodType;
-      if (prop.type == "string") zodType = z.string();
+      if (prop.type === "string") zodType = z.string();
       else if (
-        prop.type == "number" ||
-        prop.type == "integer" ||
-        prop.type == "float"
+        prop.type === "number" ||
+        prop.type === "integer" ||
+        prop.type === "float"
       )
         zodType = z.number();
       else if (prop.type === "boolean") zodType = z.boolean();
@@ -231,8 +231,7 @@ export function jsonSchemaToZod(obj: Record<string, any> | undefined) {
       }
 
       shape[key] = zodType;
-    }
-
+    });
     return z.object(shape);
   }
   throw new Error("Unsupported root schema type");
