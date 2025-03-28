@@ -5,12 +5,9 @@ import {
   convertUtilityToolToWatsonxTool,
 } from "@ibm-cloud/watsonx-ai";
 import { WatsonxTool } from "../ibm.js";
+import WatsonxAiMlVml_v1 from "@ibm-cloud/watsonx-ai/dist/watsonx-ai-ml/vml_v1.js";
 
-const serviceUrl = process.env.WATSONX_AI_SERVICE_URL as string;
-const service = WatsonXAI.newInstance({
-  serviceUrl,
-  version: "2024-05-31",
-});
+const service = {} as WatsonxAiMlVml_v1;
 
 describe("Tool class tests", () => {
   describe("Positive tests", () => {
