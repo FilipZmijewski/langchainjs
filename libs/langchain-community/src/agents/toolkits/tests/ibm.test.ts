@@ -1,4 +1,5 @@
 /* eslint-disable no-process-env */
+/* eslint-disable no-new */
 import {
   WatsonXAI,
   convertUtilityToolToWatsonxTool,
@@ -75,7 +76,7 @@ describe("Tool class tests", () => {
   describe("Negative tests", () => {
     test("Init tool with invalid schema", async () => {
       try {
-        const tool = new WatsonxTool(
+        new WatsonxTool(
           {
             name: "Weather",
           },
