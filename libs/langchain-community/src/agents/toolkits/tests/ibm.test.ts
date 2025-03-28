@@ -4,8 +4,8 @@ import {
   WatsonXAI,
   convertUtilityToolToWatsonxTool,
 } from "@ibm-cloud/watsonx-ai";
-import { WatsonxTool } from "../ibm.js";
 import WatsonxAiMlVml_v1 from "@ibm-cloud/watsonx-ai/dist/watsonx-ai-ml/vml_v1.js";
+import { WatsonxTool } from "../ibm.js";
 
 const service = {} as WatsonxAiMlVml_v1;
 
