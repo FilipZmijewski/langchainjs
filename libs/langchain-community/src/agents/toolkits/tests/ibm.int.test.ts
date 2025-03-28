@@ -100,7 +100,7 @@ describe("Tool class tests", () => {
         },
       };
 
-      let { function: watsonxTool } = convertUtilityToolToWatsonxTool({
+      const { function: watsonxTool } = convertUtilityToolToWatsonxTool({
         name: "GoogleSearch",
         description:
           "Search for online trends, news, current events, real-time information, or research topics.",

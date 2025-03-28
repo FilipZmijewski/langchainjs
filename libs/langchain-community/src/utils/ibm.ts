@@ -221,7 +221,7 @@ export function jsonSchemaToZod(obj: WatsonXAI.JsonObject | undefined) {
           prop.type === "float"
         ) {
           zodType = z.number();
-          if (typeof prop?.minimum == "number") {
+          if (typeof prop?.minimum === "number") {
             zodType = zodType.min(prop.minimum, {
               message: `${key} must be at least ${prop.minimum}`,
             });
