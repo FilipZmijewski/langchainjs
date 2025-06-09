@@ -43,7 +43,7 @@ export const authenticateAndSetInstance = ({
         bearerToken: watsonxAIBearerToken,
       }),
     });
-  } else if (watsonxAIAuthType === "cp4d" ) {
+  } else if (watsonxAIAuthType === "cp4d") {
     // cp4d auth requires username with either Password of ApiKey but not both.
     if (watsonxAIUsername && (watsonxAIPassword || watsonxAIApikey)) {
       const watsonxCPDAuthUrl = watsonxAIUrl
