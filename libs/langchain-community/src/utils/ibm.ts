@@ -46,7 +46,7 @@ export const authenticateAndSetInstance = ({
   } else if (watsonxAIAuthType === "cp4d") {
     // cp4d auth requires username with either Password of ApiKey but not both.
     if (watsonxAIUsername && (watsonxAIPassword || watsonxAIApikey)) {
-      const watsonxCPDAuthUrl = watsonxAIUrl ? watsonxAIUrl : serviceUrl;
+      const watsonxCPDAuthUrl = watsonxAIUrl ?? serviceUrl;
       return WatsonXAI.newInstance({
         version,
         serviceUrl,
