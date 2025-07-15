@@ -46,6 +46,14 @@ class ChatWatsonxStandardTests extends ChatModelUnitTests<
       ls_max_tokens: 0,
     };
   }
+  async testChatModelInitApiKey() {
+    this.skipTestMessage(
+      "testChatModelInitApiKey",
+      "ChatWatsonx",
+      "Watsonx does not support init with apiKey parameter" +
+        "Watsonx only supports watsonxApiKey."
+    );
+  }
 }
 
 const testClass = new ChatWatsonxStandardTests();

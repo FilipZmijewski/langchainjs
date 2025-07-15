@@ -47,6 +47,7 @@ import {
 import { WatsonXAI } from "@ibm-cloud/watsonx-ai";
 import {
   convertLangChainToolCallToOpenAI,
+  JsonOutputKeyToolsParser,
   makeInvalidToolCall,
   parseToolCall,
 } from "@langchain/core/output_parsers/openai_tools";
@@ -65,7 +66,10 @@ import {
   InteropZodType,
   isInteropZodSchema,
 } from "@langchain/core/utils/types";
-import { toJsonSchema } from "@langchain/core/utils/json_schema";
+import {
+  JsonSchema7Type,
+  toJsonSchema,
+} from "@langchain/core/utils/json_schema";
 import { NewTokenIndices } from "@langchain/core/callbacks/base";
 import {
   ChatsChoice,
@@ -495,6 +499,7 @@ export class ChatWatsonx<
       "signal",
       "tool_choice",
       "promptIndex",
+      "ls_structured_output_format",
     ];
 
     const authProps = [
@@ -528,6 +533,8 @@ export class ChatWatsonx<
       "headers",
       "signal",
       "disableStreaming",
+      "timeout",
+      "stopSequences",
     ];
 
     const gatewayProps = [
@@ -930,6 +937,7 @@ export class ChatWatsonx<
         generations,
         llmOutput: {
           tokenUsage: result?.usage,
+          model_name: this.model,
         },
       };
     }
@@ -1127,21 +1135,26 @@ export class ChatWatsonx<
     let outputParser: BaseLLMOutputParser<RunOutput>;
     let llm: Runnable<BaseLanguageModelInput>;
     if (method === "jsonMode") {
-      const options = {
-        responseFormat: { type: "json_object" },
-      } as Partial<CallOptions>;
-      llm = this.withConfig(options);
-
+      let outputFormatSchema: JsonSchema7Type | undefined;
       if (isInteropZodSchema(schema)) {
         outputParser = StructuredOutputParser.fromZodSchema(schema);
+        outputFormatSchema = toJsonSchema(schema);
       } else {
         outputParser = new JsonOutputParser<RunOutput>();
       }
+      const options = {
+        responseFormat: { type: "json_object" },
+        ls_structured_output_format: {
+          kwargs: { method: "jsonMode" },
+          schema: outputFormatSchema,
+        },
+      } as Partial<CallOptions>;
+      llm = this.withConfig(options);
     } else {
       if (isInteropZodSchema(schema)) {
         const asJsonSchema = toJsonSchema(schema);
-        llm = this.bindTools(
-          [
+        llm = this.withConfig({
+          tools: [
             {
               type: "function" as const,
               function: {
@@ -1152,16 +1165,18 @@ export class ChatWatsonx<
               },
             },
           ],
-          {
-            // Ideally that would be set to required but this is not supported yet
-            tool_choice: {
-              type: "function",
-              function: {
-                name: functionName,
-              },
+          // Ideally that would be set to required but this is not supported yet
+          tool_choice: {
+            type: "function",
+            function: {
+              name: functionName,
             },
-          } as Partial<CallOptions>
-        );
+          },
+          ls_structured_output_format: {
+            kwargs: { method: "functionCalling" },
+            schema: asJsonSchema,
+          },
+        } as Partial<CallOptions>);
         outputParser = new WatsonxToolsOutputParser({
           returnSingle: true,
           keyName: functionName,
@@ -1183,23 +1198,24 @@ export class ChatWatsonx<
             parameters: schema,
           };
         }
-        llm = this.bindTools(
-          [
+        llm = this.withConfig({
+          tools: [
             {
               type: "function" as const,
               function: openAIFunctionDefinition,
             },
           ],
-          {
-            // Ideally that would be set to required but this is not supported yet
-            tool_choice: {
-              type: "function",
-              function: {
-                name: functionName,
-              },
+          tool_choice: {
+            type: "function" as const,
+            function: {
+              name: functionName,
             },
-          } as Partial<CallOptions>
-        );
+          },
+          ls_structured_output_format: {
+            kwargs: { method: "functionCalling" },
+            schema: toJsonSchema(schema),
+          },
+        } as Partial<CallOptions>);
         outputParser = new WatsonxToolsOutputParser<RunOutput>({
           returnSingle: true,
           keyName: functionName,
