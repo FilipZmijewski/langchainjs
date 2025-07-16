@@ -47,7 +47,6 @@ import {
 import { WatsonXAI } from "@ibm-cloud/watsonx-ai";
 import {
   convertLangChainToolCallToOpenAI,
-  JsonOutputKeyToolsParser,
   makeInvalidToolCall,
   parseToolCall,
 } from "@langchain/core/output_parsers/openai_tools";
@@ -145,10 +144,6 @@ export interface WatsonxCallOptionsGatewayChat
   /** Additional parameters usable only in model gateway */
   modelGatewayKwargs?: WatsonxGatewayChatKwargs;
 }
-
-type Keys = keyof ChatWatsonxGatewayInput;
-type Expand<T> = T extends infer O ? { [K in keyof O]: O[K] } : never;
-type DebugKeys = Expand<Record<Keys, unknown>>;
 
 export interface WatsonxGatewayChatParams
   extends WatsonxCallOptionsGatewayChat {
