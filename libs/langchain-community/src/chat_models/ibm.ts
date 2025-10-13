@@ -559,6 +559,7 @@ export class ChatWatsonx<
       "logprobs",
       "topLogprobs",
       "maxTokens",
+      "maxCompletionTokens",
       "n",
       "presencePenalty",
       "responseFormat",
