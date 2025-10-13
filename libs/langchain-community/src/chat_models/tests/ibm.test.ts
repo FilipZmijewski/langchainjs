@@ -591,4 +591,3 @@ describe("Chat unit tests", () => {
     });
   });
 });
-

@@ -58,7 +58,6 @@ export interface WatsonxEmbeddingsBasicOptions
   extends WatsonxInit,
     WatsonxRequestBasicOptions {}
 
-
 export interface WatsonxBaseChatParams extends WatsonxChatBasicOptions {
   tool_choice?: WatsonxTooChoice;
 }

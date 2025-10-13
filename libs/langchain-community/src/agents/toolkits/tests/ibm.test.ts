@@ -6,7 +6,7 @@ import {
 } from "@ibm-cloud/watsonx-ai";
 import { WatsonxTool } from "../ibm.js";
 
-const service = {} as WatsonXAI ;
+const service = {} as WatsonXAI;
 
 describe("Tool class tests", () => {
   describe("Positive tests", () => {

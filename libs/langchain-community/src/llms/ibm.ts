@@ -74,7 +74,6 @@ interface WatsonxLLMGatewayKwargs
     keyof WatsonxLLMParams | "model" | "stream" | "prompt" | "maxTokens"
   > {}
 
-
 export interface WatsonxLLMGatewayParams
   extends WatsonxInit,
     Omit<
