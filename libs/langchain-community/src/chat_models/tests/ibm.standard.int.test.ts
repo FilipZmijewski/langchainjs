@@ -103,58 +103,6 @@ class ChatWatsonxStandardIntegrationTests extends ChatModelIntegrationTests<
     );
   }
 
-  async testBindToolsWithRunnableToolLike(callOptions?: any) {
-    if (!this.chatModelHasToolCalling) {
-      console.log("Test requires tool calling. Skipping...");
-      return;
-    }
-
-    const model = new this.Cls(this.constructorArgs);
-    if (!model.bindTools) {
-      throw new Error(
-        "bindTools undefined. Cannot test Runnable-like tool calls."
-      );
-    }
-
-    const runnableLike = RunnableLambda.from((_) => {}).asTool({
-      name: "math_addition",
-      description: adderSchema.description,
-      schema: adderSchema,
-    });
-
-    const modelWithTools = model.bindTools([runnableLike]);
-
-    const result: AIMessage = await MATH_ADDITION_PROMPT.pipe(
-      modelWithTools
-    ).invoke(
-      {
-        toolName: "math_addition",
-      },
-      callOptions
-    );
-
-    expect(result.tool_calls?.[0]).toBeDefined();
-    if (!result.tool_calls?.[0]) {
-      throw new Error("result.tool_calls is undefined");
-    }
-    const { tool_calls } = result;
-
-    expect(tool_calls).toHaveLength(1);
-
-    const toolCall = tool_calls[0];
-
-    expect(toolCall.name).toBe("math_addition");
-
-    expect(toolCall.args).toEqual({
-      a: expect.any(Number),
-      b: expect.any(Number),
-    });
-
-    expect(toolCall.id).toBeDefined();
-
-    expect(toolCall.type).toBe("tool_call");
-  }
-
   async testWithStructuredOutput() {
     this.skipTestMessage(
       "testWithStructuredOutput",
