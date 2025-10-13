@@ -1,14 +1,7 @@
 /* eslint-disable no-process-env */
 import { test, expect } from "@jest/globals";
 import { ChatModelIntegrationTests } from "@langchain/standard-tests";
-import {
-  AIMessage,
-  AIMessageChunk,
-  BaseMessage,
-} from "@langchain/core/messages";
-import { RunnableLambda } from "@langchain/core/runnables";
-import z from "zod";
-import { ChatPromptTemplate } from "@langchain/core/prompts";
+import { AIMessageChunk, BaseMessage } from "@langchain/core/messages";
 import { Serialized } from "@langchain/core/load/serializable";
 import { BaseCallbackHandler } from "@langchain/core/callbacks/base";
 import { WatsonxAuth } from "../../types/ibm.js";
@@ -19,20 +12,6 @@ import {
   WatsonxCallParams,
 } from "../ibm.js";
 
-const MATH_ADDITION_PROMPT = /* #__PURE__ */ ChatPromptTemplate.fromMessages([
-  [
-    "system",
-    "You are bad at math and must ALWAYS call the {toolName} function.",
-  ],
-  ["human", "What is the sum of 1836281973 and 19973286?"],
-]);
-
-const adderSchema = /* #__PURE__ */ z
-  .object({
-    a: z.number().int().describe("The first integer to add."),
-    b: z.number().int().describe("The second integer to add."),
-  })
-  .describe("Add two integers");
 
 export class TestCallbackHandler extends BaseCallbackHandler {
   name = "TestCallbackHandler";
