@@ -112,6 +112,8 @@ export function generateModelImportMap(
       importMapKey = "chat_models__google_genai";
     } else if (modelLcName === "ChatBedrockConverse") {
       importMapKey = "chat_models__chat_bedrock_converse";
+    } else if (modelLcName === "ChatMistralAI") {
+      importMapKey = "chat_models__mistralai";
     } else if (modelLcName === "ChatMistral") {
       importMapKey = "chat_models__mistralai";
     } else if (modelLcName === "ChatFireworks") {
@@ -153,4 +155,39 @@ export function generateOptionalImportMap(
     }
   }
   return optionalImportMap;
+}
+
+export function bindOutputSchema<T extends Runnable>(loadedSequence: T) {
+  if (
+    "first" in loadedSequence &&
+    loadedSequence.first !== null &&
+    typeof loadedSequence.first === "object" &&
+    "schema" in loadedSequence.first &&
+    "last" in loadedSequence &&
+    loadedSequence.last !== null &&
+    typeof loadedSequence.last === "object"
+  ) {
+    if (
+      "bound" in loadedSequence.last &&
+      loadedSequence.last.bound !== null &&
+      typeof loadedSequence.last.bound === "object" &&
+      "withStructuredOutput" in loadedSequence.last.bound &&
+      typeof loadedSequence.last.bound.withStructuredOutput === "function"
+    ) {
+      // eslint-disable-next-line no-param-reassign
+      loadedSequence.last.bound =
+        loadedSequence.last.bound.withStructuredOutput(
+          loadedSequence.first.schema
+        );
+    } else if (
+      "withStructuredOutput" in loadedSequence.last &&
+      typeof loadedSequence.last.withStructuredOutput === "function"
+    ) {
+      // eslint-disable-next-line no-param-reassign
+      loadedSequence.last = loadedSequence.last.withStructuredOutput(
+        loadedSequence.first.schema
+      );
+    }
+  }
+  return loadedSequence;
 }

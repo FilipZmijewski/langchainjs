@@ -1,7 +1,6 @@
 import {
   BaseCache,
   deserializeStoredGeneration,
-  getCacheKey,
   serializeGeneration,
 } from "@langchain/core/caches";
 import { Generation } from "@langchain/core/outputs";
@@ -29,7 +28,7 @@ const DEFAULT_CONTAINER_NAME = "semanticCacheContainer";
  *   databaseName: DATABASE_NAME,
  *   containerName: CONTAINER_NAME
  * });
- * const model = new ChatOpenAI({cache});
+ * const model = new ChatOpenAI({ model: "gpt-4o-mini", cache });
  *
  * // Invoke the model to perform an action
  * const response = await model.invoke("Do something random!");
@@ -108,7 +107,7 @@ export class AzureCosmosDBNoSQLSemanticCache extends BaseCache {
   }
 
   private getLlmCache(llmKey: string) {
-    const key = getCacheKey(llmKey);
+    const key = this.keyEncoder(llmKey);
     if (!this.cacheDict[key]) {
       this.cacheDict[key] = new AzureCosmosDBNoSQLVectorStore(
         this.embeddings,
@@ -183,7 +182,7 @@ export class AzureCosmosDBNoSQLSemanticCache extends BaseCache {
    * @param llmKey
    */
   public async clear(llmKey: string) {
-    const key = getCacheKey(llmKey);
+    const key = this.keyEncoder(llmKey);
     if (this.cacheDict[key]) {
       await this.cacheDict[key].delete();
     }

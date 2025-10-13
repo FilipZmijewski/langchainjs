@@ -51,6 +51,7 @@ const _SUPPORTED_PROVIDERS = [
   "cerebras",
   "deepseek",
   "xai",
+  "perplexity",
 ] as const;
 
 export type ChatModelProvider = (typeof _SUPPORTED_PROVIDERS)[number];
@@ -166,6 +167,19 @@ async function _initChatModelHelper(
         );
         return new ChatTogetherAI({ model, ...passedParams });
       }
+      case "perplexity": {
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore - Can not install as a proper dependency due to circular dependency
+        const { ChatPerplexity } = await import(
+          // We can not 'expect-error' because if you explicitly build `@langchain/community`
+          // this import will be able to be resolved, thus there will be no error. However
+          // this will never be the case in CI.
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+          // @ts-ignore - Can not install as a proper dependency due to circular dependency
+          "@langchain/community/chat_models/perplexity"
+        );
+        return new ChatPerplexity({ model, ...passedParams });
+      }
       default: {
         const supported = _SUPPORTED_PROVIDERS.join(", ");
         throw new Error(
@@ -218,6 +232,10 @@ export function _inferModelProvider(modelName: string): string | undefined {
     return "google-vertexai";
   } else if (modelName.startsWith("amazon.")) {
     return "bedrock";
+  } else if (modelName.startsWith("mistral")) {
+    return "mistralai";
+  } else if (modelName.startsWith("sonar") || modelName.startsWith("pplx")) {
+    return "perplexity";
   } else {
     return undefined;
   }
@@ -302,7 +320,9 @@ export class ConfigurableModel<
       fields.queuedMethodOperations ?? this._queuedMethodOperations;
   }
 
-  async _model(config?: RunnableConfig) {
+  async _model(
+    config?: RunnableConfig
+  ): Promise<BaseChatModel<BaseChatModelCallOptions, AIMessageChunk>> {
     const params = { ...this._defaultConfig, ...this._modelParams(config) };
     let initializedModel = await _initChatModelHelper(
       params.model,
@@ -344,12 +364,13 @@ export class ConfigurableModel<
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     params?: Record<string, any>
   ): ConfigurableModel<RunInput, CallOptions> {
-    this._queuedMethodOperations.bindTools = [tools, params];
+    const newQueuedOperations = { ...this._queuedMethodOperations };
+    newQueuedOperations.bindTools = [tools, params];
     return new ConfigurableModel<RunInput, CallOptions>({
       defaultConfig: this._defaultConfig,
       configurableFields: this._configurableFields,
       configPrefix: this._configPrefix,
-      queuedMethodOperations: this._queuedMethodOperations,
+      queuedMethodOperations: newQueuedOperations,
     });
   }
 
@@ -358,12 +379,13 @@ export class ConfigurableModel<
     schema,
     ...args
   ): ReturnType<BaseChatModel["withStructuredOutput"]> => {
-    this._queuedMethodOperations.withStructuredOutput = [schema, ...args];
+    const newQueuedOperations = { ...this._queuedMethodOperations };
+    newQueuedOperations.withStructuredOutput = [schema, ...args];
     return new ConfigurableModel<RunInput, CallOptions>({
       defaultConfig: this._defaultConfig,
       configurableFields: this._configurableFields,
       configPrefix: this._configPrefix,
-      queuedMethodOperations: this._queuedMethodOperations,
+      queuedMethodOperations: newQueuedOperations,
     }) as unknown as ReturnType<BaseChatModel["withStructuredOutput"]>;
   };
 
@@ -632,6 +654,7 @@ export async function initChatModel<
  *   - mistralai (@langchain/mistralai)
  *   - groq (@langchain/groq)
  *   - ollama (@langchain/ollama)
+ *   - perplexity (@langchain/community/chat_models/perplexity)
  *   - cerebras (@langchain/cerebras)
  *   - deepseek (@langchain/deepseek)
  *   - xai (@langchain/xai)
@@ -797,7 +820,7 @@ export async function initChatModel<
  * This function initializes a ChatModel based on the provided model name and provider.
  * It supports various model providers and allows for runtime configuration of model parameters.
  *
- * Security Note: Setting `configurableFields` to "any" means fields like api_key, base_url, etc.
+ * Security Note: Setting `configurableFields` to "any" means fields like apiKey, baseUrl, etc.
  * can be altered at runtime, potentially redirecting model requests to a different service/user.
  * Make sure that if you're accepting untrusted configurations, you enumerate the
  * `configurableFields` explicitly.

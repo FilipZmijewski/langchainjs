@@ -68,11 +68,16 @@ export function _makeMessageChunkFromAnthropicEvent(
         cache_read: (data.usage as any).cache_read_input_tokens,
       },
     };
+    const responseMetadata =
+      "context_management" in data.delta
+        ? { context_management: data.delta.context_management }
+        : undefined;
     return {
       chunk: new AIMessageChunk({
         content: fields.coerceContentToString ? "" : [],
         additional_kwargs: { ...data.delta },
         usage_metadata: fields.streamUsage ? usageMetadata : undefined,
+        response_metadata: responseMetadata,
       }),
     };
   } else if (
@@ -87,16 +92,6 @@ export function _makeMessageChunkFromAnthropicEvent(
     const contentBlock = data.content_block;
     let toolCallChunks: ToolCallChunk[];
     if (contentBlock.type === "tool_use") {
-      toolCallChunks = [
-        {
-          id: contentBlock.id,
-          index: data.index,
-          name: contentBlock.name,
-          args: "",
-        },
-      ];
-    } else if (contentBlock.type === "server_tool_use") {
-      // Handle anthropic built-in server tool use (like web search)
       toolCallChunks = [
         {
           id: contentBlock.id,

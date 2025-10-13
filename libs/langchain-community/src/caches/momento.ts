@@ -9,7 +9,6 @@ import {
 import {
   BaseCache,
   deserializeStoredGeneration,
-  getCacheKey,
   serializeGeneration,
 } from "@langchain/core/caches";
 import { Generation } from "@langchain/core/outputs";
@@ -58,6 +57,7 @@ export interface MomentoCacheProps {
  * });
  * // Initialize the OpenAI model with Momento cache for caching responses
  * const model = new ChatOpenAI({
+ *   model: "gpt-4o-mini",
  *   cache,
  * });
  * await model.invoke("How are you today?");
@@ -123,7 +123,7 @@ export class MomentoCache extends BaseCache {
     prompt: string,
     llmKey: string
   ): Promise<Generation[] | null> {
-    const key = getCacheKey(prompt, llmKey);
+    const key = this.keyEncoder(prompt, llmKey);
     const getResponse = await this.client.get(this.cacheName, key);
 
     if (getResponse instanceof CacheGet.Hit) {
@@ -156,7 +156,7 @@ export class MomentoCache extends BaseCache {
     llmKey: string,
     value: Generation[]
   ): Promise<void> {
-    const key = getCacheKey(prompt, llmKey);
+    const key = this.keyEncoder(prompt, llmKey);
     const setResponse = await this.client.set(
       this.cacheName,
       key,

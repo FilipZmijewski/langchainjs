@@ -38,6 +38,7 @@ import {
 } from "./utils/message_outputs.js";
 import {
   AnthropicBuiltInToolUnion,
+  AnthropicContextManagementConfigParam,
   AnthropicMessageCreateParams,
   AnthropicMessageStreamEvent,
   AnthropicRequestOptions,
@@ -83,7 +84,7 @@ function _documentsInParams(
         block != null &&
         block.type === "document" &&
         typeof block.citations === "object" &&
-        block.citations.enabled
+        block.citations?.enabled
       ) {
         return true;
       }
@@ -104,15 +105,25 @@ function isAnthropicTool(tool: any): tool is Anthropic.Messages.Tool {
 }
 
 function isBuiltinTool(tool: unknown): tool is AnthropicBuiltInToolUnion {
-  const builtinTools = ["web_search"];
+  const builtInToolPrefixes = [
+    "text_editor_",
+    "computer_",
+    "bash_",
+    "web_search_",
+    "web_fetch_",
+    "str_replace_editor_",
+    "str_replace_based_edit_tool_",
+    "code_execution_",
+    "memory_",
+  ];
   return (
     typeof tool === "object" &&
     tool !== null &&
     "type" in tool &&
     "name" in tool &&
-    typeof tool.type === "string" &&
-    typeof tool.name === "string" &&
-    builtinTools.includes(tool.name)
+    builtInToolPrefixes.some(
+      (prefix) => typeof tool.type === "string" && tool.type.startsWith(prefix)
+    )
   );
 }
 
@@ -131,8 +142,10 @@ export interface AnthropicInput {
    * from 0 to 1. Use temp closer to 0 for analytical /
    * multiple choice, and temp closer to 1 for creative
    * and generative tasks.
+   * To not set this field, pass `null`. If `undefined` is passed,
+   * the default (1) will be used.
    */
-  temperature?: number;
+  temperature?: number | null;
 
   /** Only sample from the top K options for each subsequent
    * token. Used to remove "long tail" low probability
@@ -147,8 +160,13 @@ export interface AnthropicInput {
    * specified by top_p. Defaults to -1, which disables it.
    * Note that you should either alter temperature or top_p,
    * but not both.
+   *
+   * To not set this field, pass `null`. If `undefined` is passed,
+   * the default (-1) will be used.
+   *
+   * For Opus 4.1 and Sonnet 4.5, this defaults to `null`.
    */
-  topP?: number;
+  topP?: number | null;
 
   /** A maximum number of tokens to generate before stopping. */
   maxTokens?: number;
@@ -208,6 +226,11 @@ export interface AnthropicInput {
    * Options for extended thinking.
    */
   thinking?: AnthropicThinkingConfigParam;
+
+  /**
+   * Configuration for context management. See https://docs.claude.com/en/docs/build-with-claude/context-editing
+   */
+  contextManagement?: AnthropicContextManagementConfigParam;
 }
 
 /**
@@ -645,11 +668,11 @@ export class ChatAnthropicMessages<
 
   apiUrl?: string;
 
-  temperature = 1;
+  temperature: number | undefined = 1;
 
   topK = -1;
 
-  topP = -1;
+  topP: number | undefined = -1;
 
   maxTokens = 2048;
 
@@ -666,6 +689,8 @@ export class ChatAnthropicMessages<
   clientOptions: ClientOptions;
 
   thinking: AnthropicThinkingConfigParam = { type: "disabled" };
+
+  contextManagement?: AnthropicContextManagementConfigParam;
 
   // Used for non-streaming requests
   protected batchClient: Anthropic;
@@ -706,9 +731,20 @@ export class ChatAnthropicMessages<
 
     this.invocationKwargs = fields?.invocationKwargs ?? {};
 
-    this.temperature = fields?.temperature ?? this.temperature;
+    // Default to `undefined` for `topP` for Opus 4.1 and Sonnet 4.5 models
+    if (this.model.includes("opus-4-1") || this.model.includes("sonnet-4-5")) {
+      this.topP = fields?.topP === null ? undefined : fields?.topP;
+    } else {
+      this.topP = fields?.topP ?? this.topP;
+    }
+
+    // If the user passes `null`, set it to `undefined`. Otherwise, use their value or the default. We have to check for null, because
+    // there's no way for us to know if they explicitly set it to `undefined`, or never passed a value
+    this.temperature =
+      fields?.temperature === null
+        ? undefined
+        : fields?.temperature ?? this.temperature;
     this.topK = fields?.topK ?? this.topK;
-    this.topP = fields?.topP ?? this.topP;
     this.maxTokens =
       fields?.maxTokensToSample ?? fields?.maxTokens ?? this.maxTokens;
     this.stopSequences = fields?.stopSequences ?? this.stopSequences;
@@ -717,6 +753,8 @@ export class ChatAnthropicMessages<
     this.streamUsage = fields?.streamUsage ?? this.streamUsage;
 
     this.thinking = fields?.thinking ?? this.thinking;
+    this.contextManagement =
+      fields?.contextManagement ?? this.contextManagement;
 
     this.createClient =
       fields?.createClient ??
@@ -805,13 +843,18 @@ export class ChatAnthropicMessages<
       | Anthropic.Messages.ToolChoiceAuto
       | Anthropic.Messages.ToolChoiceAny
       | Anthropic.Messages.ToolChoiceTool
+      | Anthropic.Messages.ToolChoiceNone
       | undefined = handleToolChoice(options?.tool_choice);
 
     if (this.thinking.type === "enabled") {
       if (this.topK !== -1) {
         throw new Error("topK is not supported when thinking is enabled");
       }
-      if (this.topP !== -1) {
+      if (
+        this.model.includes("opus-4-1") || this.model.includes("sonnet-4-5")
+          ? this.topP !== undefined
+          : this.topP !== -1
+      ) {
         throw new Error("topP is not supported when thinking is enabled");
       }
       if (this.temperature !== 1) {
@@ -842,6 +885,7 @@ export class ChatAnthropicMessages<
       tools: this.formatStructuredToolToAnthropic(options?.tools),
       tool_choice,
       thinking: this.thinking,
+      context_management: this.contextManagement,
       ...this.invocationKwargs,
     };
   }

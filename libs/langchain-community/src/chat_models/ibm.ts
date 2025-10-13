@@ -593,7 +593,9 @@ export class ChatWatsonx<
 
   modelGateway = false;
 
-  maxTokens: number;
+  maxTokens?: number;
+
+  maxCompletionTokens?: number;
 
   maxRetries = 0;
 
@@ -655,6 +657,7 @@ export class ChatWatsonx<
     this.maxConcurrency = fields?.maxConcurrency;
     this.frequencyPenalty = fields?.frequencyPenalty;
     this.maxTokens = fields?.maxTokens ?? this.maxTokens;
+    this.maxCompletionTokens = fields?.maxCompletionTokens;
     this.presencePenalty = fields?.presencePenalty;
     this.topP = fields?.topP;
     this.responseFormat = fields?.responseFormat ?? this.responseFormat;
@@ -713,6 +716,8 @@ export class ChatWatsonx<
 
     const paramDefaults = {
       maxTokens: options.maxTokens ?? this.maxTokens,
+      maxCompletionTokens:
+        options.maxCompletionTokens ?? this.maxCompletionTokens,
       temperature: options.temperature ?? this.temperature,
       topP: options.topP ?? this.topP,
       presencePenalty: options.presencePenalty ?? this.presencePenalty,

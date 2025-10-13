@@ -17,6 +17,8 @@ export type AnthropicMessageCreateParams =
 export type AnthropicStreamingMessageCreateParams =
   Anthropic.MessageCreateParamsStreaming;
 export type AnthropicThinkingConfigParam = Anthropic.ThinkingConfigParam;
+export type AnthropicContextManagementConfigParam =
+  Anthropic.Beta.BetaContextManagementConfig;
 export type AnthropicMessageStreamEvent = Anthropic.MessageStreamEvent;
 export type AnthropicRequestOptions = Anthropic.RequestOptions;
 export type AnthropicToolChoice =
@@ -29,6 +31,7 @@ export type AnthropicToolChoice =
   | "none"
   | string;
 export type ChatAnthropicToolType = Anthropic.Messages.Tool | BindToolsInput;
+
 export type AnthropicTextBlockParam = Anthropic.Messages.TextBlockParam;
 export type AnthropicImageBlockParam = Anthropic.Messages.ImageBlockParam;
 export type AnthropicToolUseBlockParam = Anthropic.Messages.ToolUseBlockParam;
@@ -44,9 +47,10 @@ export type AnthropicWebSearchToolResultBlockParam =
   Anthropic.Messages.WebSearchToolResultBlockParam;
 export type AnthropicWebSearchResultBlockParam =
   Anthropic.Messages.WebSearchResultBlockParam;
+export type AnthropicSearchResultBlockParam = Anthropic.SearchResultBlockParam;
 
 // Union of all possible content block types including server tool use
-export type AnthropicContentBlock =
+export type ChatAnthropicContentBlock =
   | AnthropicTextBlockParam
   | AnthropicImageBlockParam
   | AnthropicToolUseBlockParam
@@ -56,7 +60,8 @@ export type AnthropicContentBlock =
   | AnthropicRedactedThinkingBlockParam
   | AnthropicServerToolUseBlockParam
   | AnthropicWebSearchToolResultBlockParam
-  | AnthropicWebSearchResultBlockParam;
+  | AnthropicWebSearchResultBlockParam
+  | AnthropicSearchResultBlockParam;
 
 export function isAnthropicImageBlockParam(
   block: unknown

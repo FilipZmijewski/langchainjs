@@ -445,6 +445,24 @@ test("Can pass tool_choice", async () => {
   expect(input.location).toBeTruthy();
 });
 
+test("Can tool choice set none", async () => {
+  const weatherTool = tool((_) => "no-op", {
+    name: "get_weather",
+    description: zodSchema.description,
+    schema: zodSchema,
+  });
+
+  const modelWithTools = model.bindTools([weatherTool], {
+    tool_choice: "none",
+  });
+
+  const result = await modelWithTools.invoke(
+    "What is the weather in SF today?"
+  );
+
+  expect(result.tool_calls).toStrictEqual([]);
+});
+
 test("bindTools accepts openai formatted tool", async () => {
   const openaiTool = {
     type: "function",
@@ -848,3 +866,61 @@ test("calling tool with no args should work", async () => {
 //   console.log(result);
 //   expect(result.messages.at(-1)?.content).toContain("80");
 // });
+
+// https://docs.claude.com/en/docs/agents-and-tools/tool-use/memory-tool
+test("memory tool", async () => {
+  const llm = new ChatAnthropic({
+    model: "claude-sonnet-4-5-20250929",
+    clientOptions: {
+      defaultHeaders: {
+        "anthropic-beta": "context-management-2025-06-27",
+      },
+    },
+  });
+  const llmWithTools = llm.bindTools([
+    { type: "memory_20250818", name: "memory" },
+  ]);
+  const response = await llmWithTools.invoke("What are my interests?");
+  expect(response).toBeInstanceOf(AIMessage);
+  expect(response.tool_calls).toBeDefined();
+  expect(response.tool_calls?.[0].name).toBe("memory");
+});
+
+// https://docs.claude.com/en/docs/build-with-claude/context-editing
+test("context management", async () => {
+  const llm = new ChatAnthropic({
+    model: "claude-sonnet-4-5-20250929",
+    clientOptions: {
+      defaultHeaders: {
+        "anthropic-beta": "context-management-2025-06-27",
+      },
+    },
+    contextManagement: {
+      edits: [
+        {
+          type: "clear_tool_uses_20250919",
+          trigger: { type: "input_tokens", value: 10 },
+          clear_at_least: { type: "input_tokens", value: 5 },
+        },
+      ],
+    },
+  });
+  const llmWithTools = llm.bindTools([
+    { type: "web_search_20250305", name: "web_search" },
+  ]);
+  const inputMessage = {
+    role: "user",
+    content: "Search for recent developments in AI",
+  };
+  const response = await llmWithTools.invoke([inputMessage]);
+  expect(response.response_metadata.context_management).toBeDefined();
+
+  // Test streaming
+  let full: AIMessageChunk | undefined;
+  for await (const chunk of await llmWithTools.stream([inputMessage])) {
+    expect(chunk).toBeInstanceOf(AIMessageChunk);
+    full = full ? concat(full, chunk) : chunk;
+  }
+  expect(full).toBeInstanceOf(AIMessageChunk);
+  expect(full?.response_metadata.context_management).toBeDefined();
+});

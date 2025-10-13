@@ -5,12 +5,14 @@ import {
   AIMessage,
   ToolMessage,
   ToolMessageChunk,
+  RemoveMessage,
   AIMessageChunk,
   coerceMessageLikeToMessage,
   SystemMessage,
 } from "../index.js";
 import { load } from "../../load/index.js";
 import { concat } from "../../utils/stream.js";
+import { ToolCallChunk } from "../tool.js";
 
 test("Test ChatPromptTemplate can format OpenAI content image messages", async () => {
   const message = new HumanMessage({
@@ -336,6 +338,348 @@ describe("Complex AIMessageChunk concat", () => {
       })
     );
   });
+
+  it("concatenates partial json tool call chunks", () => {
+    const chunks: ToolCallChunk[] = [
+      {
+        name: undefined,
+        args: '{"issueKey": "',
+        id: "0",
+        type: "tool_call_chunk",
+      },
+      {
+        name: "",
+        args: "INFO-",
+        id: "0",
+        type: "tool_call_chunk",
+      },
+      {
+        name: "",
+        args: '10001", "fields": ["summary"]', // missing closing curly
+        id: "0",
+        type: "tool_call_chunk",
+      },
+    ];
+
+    const result = new AIMessageChunk({
+      content: "",
+      tool_call_chunks: chunks,
+    });
+
+    expect(result.tool_calls?.length).toBe(1);
+    expect(result.invalid_tool_calls?.length).toBe(0);
+    expect(result.tool_calls).toEqual([
+      {
+        name: "",
+        args: {
+          issueKey: "INFO-10001",
+          fields: ["summary"],
+        },
+        id: "0",
+        type: "tool_call",
+      },
+    ]);
+  });
+
+  it("concatenates partial json tool call chunks with malformed args", () => {
+    const chunks: ToolCallChunk[] = [
+      {
+        name: "",
+        args: 'h{"issueKey": "',
+        id: "0",
+        type: "tool_call_chunk",
+      },
+      {
+        name: "",
+        args: "INFO-",
+        id: "0",
+        type: "tool_call_chunk",
+      },
+    ];
+
+    const result = new AIMessageChunk({
+      content: "",
+      tool_call_chunks: chunks,
+    });
+
+    expect(result.tool_calls?.length).toBe(0);
+    expect(result.invalid_tool_calls?.length).toBe(1);
+    expect(result.invalid_tool_calls).toEqual([
+      {
+        name: "",
+        args: 'h{"issueKey": "INFO-',
+        id: "0",
+        error: "Malformed args.",
+        type: "invalid_tool_call",
+      },
+    ]);
+  });
+
+  it("concatenates tool call chunks with no args", () => {
+    const chunks: ToolCallChunk[] = [
+      {
+        id: "0",
+        name: "foo",
+        type: "tool_call_chunk",
+      },
+    ];
+    const result = new AIMessageChunk({
+      content: "",
+      tool_call_chunks: chunks,
+    });
+
+    expect(result.tool_calls?.length).toBe(1);
+    expect(result.invalid_tool_calls?.length).toBe(0);
+    expect(result.tool_calls).toEqual([
+      {
+        id: "0",
+        name: "foo",
+        args: {},
+        type: "tool_call",
+      },
+    ]);
+  });
+
+  it("concatenates tool call chunks with empty string args", () => {
+    const chunks: ToolCallChunk[] = [
+      {
+        id: "0",
+        name: "foo",
+        type: "tool_call_chunk",
+        args: "",
+      },
+    ];
+
+    const result = new AIMessageChunk({
+      content: "",
+      tool_call_chunks: chunks,
+    });
+    expect(result.tool_calls?.length).toBe(1);
+    expect(result.invalid_tool_calls?.length).toBe(0);
+    expect(result.tool_calls).toEqual([
+      {
+        id: "0",
+        name: "foo",
+        args: {},
+        type: "tool_call",
+      },
+    ]);
+  });
+
+  it("concatenates tool call chunks without IDs", () => {
+    const chunks = [
+      new AIMessageChunk({
+        id: "chatcmpl-x",
+        content: "",
+        tool_call_chunks: [
+          {
+            name: "get_weather",
+            args: "",
+            id: "call_q6ZzjkLjKNYb4DizyMOaqpfW",
+            index: 0,
+            type: "tool_call_chunk",
+          },
+        ],
+      }),
+      new AIMessageChunk({
+        id: "chatcmpl-x",
+        content: "",
+        tool_call_chunks: [
+          {
+            args: '{"',
+            index: 0,
+            type: "tool_call_chunk",
+          },
+        ],
+      }),
+      new AIMessageChunk({
+        id: "chatcmpl-x",
+        content: "",
+        tool_call_chunks: [
+          {
+            args: "location",
+            index: 0,
+            type: "tool_call_chunk",
+          },
+        ],
+      }),
+      new AIMessageChunk({
+        id: "chatcmpl-x",
+        content: "",
+        tool_call_chunks: [
+          {
+            args: '":"',
+            index: 0,
+            type: "tool_call_chunk",
+          },
+        ],
+      }),
+      new AIMessageChunk({
+        id: "chatcmpl-x",
+        content: "",
+        tool_call_chunks: [
+          {
+            args: "San",
+            index: 0,
+            type: "tool_call_chunk",
+          },
+        ],
+      }),
+      new AIMessageChunk({
+        id: "chatcmpl-x",
+        content: "",
+        tool_call_chunks: [
+          {
+            args: " Francisco",
+            index: 0,
+            type: "tool_call_chunk",
+          },
+        ],
+      }),
+      new AIMessageChunk({
+        id: "chatcmpl-x",
+        content: "",
+        tool_call_chunks: [
+          {
+            args: '"}',
+            index: 0,
+            type: "tool_call_chunk",
+          },
+        ],
+      }),
+    ];
+    let finalChunk = new AIMessageChunk("");
+    for (const chunk of chunks) {
+      finalChunk = finalChunk.concat(chunk);
+    }
+    expect(finalChunk.tool_calls).toHaveLength(1);
+    expect(finalChunk.tool_calls).toEqual([
+      {
+        type: "tool_call",
+        name: "get_weather",
+        args: {
+          location: "San Francisco",
+        },
+        id: "call_q6ZzjkLjKNYb4DizyMOaqpfW",
+      },
+    ]);
+  });
+});
+
+describe("AIMessageChunk", () => {
+  describe("constructor", () => {
+    it("omits tool call chunks without IDs", () => {
+      const chunks: ToolCallChunk[] = [
+        {
+          name: "get_current_time",
+          type: "tool_call_chunk",
+          index: 0,
+          // no `id` provided
+        },
+      ];
+
+      const result = new AIMessageChunk({
+        content: "",
+        tool_call_chunks: chunks,
+      });
+
+      expect(result.tool_calls?.length).toBe(0);
+      expect(result.invalid_tool_calls?.length).toBe(1);
+      expect(result.invalid_tool_calls).toEqual([
+        {
+          type: "invalid_tool_call",
+          id: undefined,
+          name: "get_current_time",
+          args: "{}",
+          error: "Malformed args.",
+        },
+      ]);
+    });
+
+    it("omits tool call chunks without IDs and no index", () => {
+      const chunks: ToolCallChunk[] = [
+        {
+          name: "get_current_time",
+          type: "tool_call_chunk",
+          // no `id` or `index` provided
+        },
+      ];
+
+      const result = new AIMessageChunk({
+        content: "",
+        tool_call_chunks: chunks,
+      });
+
+      expect(result.tool_calls?.length).toBe(0);
+      expect(result.invalid_tool_calls?.length).toBe(1);
+      expect(result.invalid_tool_calls).toEqual([
+        {
+          type: "invalid_tool_call",
+          id: undefined,
+          name: "get_current_time",
+          args: "{}",
+          error: "Malformed args.",
+        },
+      ]);
+    });
+
+    it("can concatenate tool call chunks without IDs", () => {
+      const chunk = new AIMessageChunk({
+        id: "chatcmpl-x",
+        content: "",
+        tool_call_chunks: [
+          {
+            name: "get_weather",
+            args: "",
+            id: "call_q6ZzjkLjKNYb4DizyMOaqpfW",
+            index: 0,
+            type: "tool_call_chunk",
+          },
+          {
+            args: '{"',
+            index: 0,
+            type: "tool_call_chunk",
+          },
+          {
+            args: "location",
+            index: 0,
+            type: "tool_call_chunk",
+          },
+          {
+            args: '":"',
+            index: 0,
+            type: "tool_call_chunk",
+          },
+          {
+            args: "San",
+            index: 0,
+            type: "tool_call_chunk",
+          },
+          {
+            args: " Francisco",
+            index: 0,
+            type: "tool_call_chunk",
+          },
+          {
+            args: '"}',
+            index: 0,
+            type: "tool_call_chunk",
+          },
+        ],
+      });
+      expect(chunk.tool_calls).toHaveLength(1);
+      expect(chunk.tool_calls).toEqual([
+        {
+          type: "tool_call",
+          name: "get_weather",
+          args: {
+            location: "San Francisco",
+          },
+          id: "call_q6ZzjkLjKNYb4DizyMOaqpfW",
+        },
+      ]);
+    });
+  });
 });
 
 describe("Message like coercion", () => {
@@ -370,6 +714,11 @@ describe("Message like coercion", () => {
         content: "10.2",
         tool_call_id: "10.2",
       },
+      {
+        role: "remove",
+        id: "1234",
+        content: "",
+      },
     ].map(coerceMessageLikeToMessage);
     expect(messages).toEqual([
       new SystemMessage({
@@ -401,6 +750,9 @@ describe("Message like coercion", () => {
         name: undefined,
         content: "10.2",
         tool_call_id: "10.2",
+      }),
+      new RemoveMessage({
+        id: "1234",
       }),
     ]);
   });
