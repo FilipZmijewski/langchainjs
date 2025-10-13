@@ -1,6 +1,5 @@
 import { RequestCallbacks } from "@ibm-cloud/watsonx-ai/dist/watsonx-ai-ml/vml_v1.js";
 import { ChatsToolChoice } from "@ibm-cloud/watsonx-ai/gateway";
-import { EmbeddingsParams } from "@langchain/core/embeddings";
 import { BaseChatModelCallOptions } from "@langchain/core/language_models/chat_models";
 import { BaseLLMParams } from "@langchain/core/language_models/llms";
 
@@ -49,6 +48,10 @@ export interface WatsonxChatBasicOptions
 export interface WatsonxLLMBasicOptions
   extends BaseLLMParams,
     WatsonxInit,
+    WatsonxRequestBasicOptions {}
+
+export interface WatsonxRerankBasicOptions
+  extends WatsonxInit,
     WatsonxRequestBasicOptions {}
 
 export interface WatsonxEmbeddingsBasicOptions

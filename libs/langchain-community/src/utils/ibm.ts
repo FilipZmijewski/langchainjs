@@ -310,7 +310,9 @@ export function jsonSchemaToZod(obj: WatsonXAI.JsonObject | undefined) {
             });
         } else if (prop.type === "boolean") zodType = z.boolean();
         else if (prop.type === "array")
-          zodType = z.array(jsonSchemaToZod(prop.items));
+          zodType = z.array(
+            prop.items ? jsonSchemaToZod(prop.items) : z.string()
+          );
         else if (prop.type === "object") {
           zodType = jsonSchemaToZod(prop);
         } else throw new Error(`Unsupported type: ${prop.type}`);

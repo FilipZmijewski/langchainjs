@@ -46,6 +46,7 @@ class ChatWatsonxStandardTests extends ChatModelUnitTests<
       ls_max_tokens: 0,
     };
   }
+
   async testChatModelInitApiKey() {
     this.skipTestMessage(
       "testChatModelInitApiKey",

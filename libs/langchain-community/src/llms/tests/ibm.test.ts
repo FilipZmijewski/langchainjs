@@ -1,7 +1,6 @@
 /* eslint-disable no-process-env */
 /* eslint-disable dot-notation */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import WatsonxAiMlVml_v1 from "@ibm-cloud/watsonx-ai/dist/watsonx-ai-ml/vml_v1.js";
 import { Gateway } from "@ibm-cloud/watsonx-ai/gateway";
 import { jest } from "@jest/globals";
 import { AIMessageChunk } from "@langchain/core/messages";
@@ -78,7 +77,7 @@ describe("LLM unit tests", () => {
         serviceUrl,
         ...fakeAuthProp,
       });
-      expect(instance).toBeInstanceOf(WatsonxAiMlVml_v1);
+      expect(instance).toBeInstanceOf(WatsonXAI);
     });
 
     test("Test basic properties after init", async () => {

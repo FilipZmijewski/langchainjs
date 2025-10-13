@@ -74,7 +74,6 @@ interface WatsonxLLMGatewayKwargs
     keyof WatsonxLLMParams | "model" | "stream" | "prompt" | "maxTokens"
   > {}
 
-type keys = keyof WatsonxLLMConstructor;
 
 export interface WatsonxLLMGatewayParams
   extends WatsonxInit,
@@ -98,7 +97,9 @@ export interface WatsonxCallOptionsLLM
 
 /** Constructor input interfaces for each mode */
 
-export interface WatsonxInputLLM extends WatsonxLLMBasicOptions, WatsonxLLMParams {
+export interface WatsonxInputLLM
+  extends WatsonxLLMBasicOptions,
+    WatsonxLLMParams {
   model: string;
   spaceId?: string;
   projectId?: string;
@@ -155,7 +156,9 @@ export class WatsonxLLM<
 
   idOrName?: string;
 
-  decodingMethod?: TextGenParameters.Constants.DecodingMethod | string;
+  decodingMethod?:
+    | WatsonXAI.TextGenParameters.Constants.DecodingMethod
+    | string;
 
   lengthPenalty?: TextGenLengthPenalty;
 

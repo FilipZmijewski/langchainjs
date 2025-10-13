@@ -112,7 +112,6 @@ export interface WatsonxProjectSpaceParams extends WatsonxCallOptionsChat {
   serviceUrl: string;
   version: string;
 }
-
 /** Deployed params */
 export interface WatsonxCallOptionsDeployedChat
   extends Partial<Omit<DeploymentsTextChatParams, "messages">>,
@@ -122,15 +121,12 @@ export interface WatsonxDeployedParams extends WatsonxCallOptionsDeployedChat {
   serviceUrl: string;
   version: string;
 }
-
 /** Gateway params */
-
-export interface WatsonxGatewayChatKwargs
+export default interface WatsonxGatewayChatKwargs
   extends Omit<
     CreateChatCompletionsParams,
     keyof TextChatParams | "model" | "stream" | "messages"
   > {}
-
 export interface WatsonxCallOptionsGatewayChat
   extends Omit<
       CreateChatCompletionsParams,
