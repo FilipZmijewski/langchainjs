@@ -12,7 +12,6 @@ import {
   WatsonxCallParams,
 } from "../ibm.js";
 
-
 export class TestCallbackHandler extends BaseCallbackHandler {
   name = "TestCallbackHandler";
 
