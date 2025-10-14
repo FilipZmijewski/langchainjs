@@ -824,7 +824,7 @@ export class ChatWatsonx<
     return result;
   }
 
-  async _chatModelGateway<S extends boolean = false>(
+  private async _chatModelGateway<S extends boolean = false>(
     scopeId: ReturnType<ChatWatsonx["scopeId"]>,
     params: ReturnType<ChatWatsonx["invocationParams"]>,
     messages: ChatsMessage[],
