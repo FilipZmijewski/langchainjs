@@ -44,7 +44,8 @@ import {
   TextChatToolCall,
   TextChatUsage,
 } from "@ibm-cloud/watsonx-ai/dist/watsonx-ai-ml/vml_v1.js";
-import { WatsonXAI } from "@ibm-cloud/watsonx-ai";
+import { WatsonXAI, Stream } from "@ibm-cloud/watsonx-ai";
+import { Response } from "@ibm-cloud/watsonx-ai/base";
 import {
   convertLangChainToolCallToOpenAI,
   makeInvalidToolCall,
@@ -71,6 +72,7 @@ import {
 } from "@langchain/core/utils/json_schema";
 import { NewTokenIndices } from "@langchain/core/callbacks/base";
 import {
+  ChatObjectStream,
   ChatsChoice,
   ChatsMessage,
   ChatsRequestTool,
@@ -203,46 +205,50 @@ function _convertToolToWatsonxTool(
     };
   });
 }
+const MESSAGE_TYPE_TO_ROLE_MAP: Record<MessageType, string> = {
+  human: "user",
+  ai: "assistant",
+  system: "system",
+  tool: "tool",
+  function: "function",
+  generic: "assistant",
+  developer: "developer",
+  remove: "function",
+};
+
+const getRole = (role: MessageType): string => {
+  const watsonRole = MESSAGE_TYPE_TO_ROLE_MAP[role];
+  if (!watsonRole) {
+    throw new Error(`Unknown message type: ${role}`);
+  }
+  return watsonRole;
+};
+
+const getToolCalls = (
+  message: BaseMessage,
+  model?: string
+): TextChatToolCall[] | undefined => {
+  if (isAIMessage(message) && message.tool_calls?.length) {
+    return message.tool_calls
+      .map((toolCall) => ({
+        ...toolCall,
+        id: _convertToValidToolId(model ?? "", toolCall.id ?? ""),
+      }))
+      .map(convertLangChainToolCallToOpenAI);
+  }
+  return undefined;
+};
 
 function _convertMessagesToWatsonxMessages(
   messages: BaseMessage[],
   model?: string
 ): TextChatResultMessage[] | ChatsMessage[] {
-  const getRole = (role: MessageType) => {
-    switch (role) {
-      case "human":
-        return "user";
-      case "ai":
-        return "assistant";
-      case "system":
-        return "system";
-      case "tool":
-        return "tool";
-      case "function":
-        return "function";
-      default:
-        throw new Error(`Unknown message type: ${role}`);
-    }
-  };
-
-  const getTools = (message: BaseMessage): TextChatToolCall[] | undefined => {
-    if (isAIMessage(message) && message.tool_calls?.length) {
-      return message.tool_calls
-        .map((toolCall) => ({
-          ...toolCall,
-          id: _convertToValidToolId(model ?? "", toolCall.id ?? ""),
-        }))
-        .map(convertLangChainToolCallToOpenAI) as TextChatToolCall[];
-    }
-    return undefined;
-  };
-
   return messages.map((message) => {
-    const toolCalls = getTools(message);
+    const toolCalls = getToolCalls(message, model);
     const content = toolCalls === undefined ? message.content : "";
     if ("tool_call_id" in message && typeof message.tool_call_id === "string") {
       return {
-        role: getRole(message._getType()),
+        role: getRole(message.getType()),
         content,
         name: message.name,
         tool_call_id: _convertToValidToolId(model ?? "", message.tool_call_id),
@@ -250,11 +256,11 @@ function _convertMessagesToWatsonxMessages(
     }
 
     return {
-      role: getRole(message._getType()),
+      role: getRole(message.getType()),
       content,
       tool_calls: toolCalls,
     };
-  }) as TextChatResultMessage[];
+  });
 }
 
 function _watsonxResponseToChatMessage(
@@ -330,64 +336,63 @@ function _convertDeltaToMessageChunk(
       )
     : undefined;
 
-  let role = "assistant";
-  if (delta.role) {
-    role = delta.role;
-  } else if (defaultRole) {
-    role = defaultRole;
-  }
+  const role = delta.role ?? defaultRole ?? "assistant";
   const content = delta.content ?? "";
-  let additional_kwargs;
-  if (rawToolCalls) {
-    additional_kwargs = {
-      tool_calls: rawToolCalls,
-    };
-  } else {
-    additional_kwargs = {};
-  }
+  const additional_kwargs = rawToolCalls ? { tool_calls: rawToolCalls } : {};
 
-  if (role === "user") {
-    return new HumanMessageChunk({ content });
-  } else if (role === "assistant") {
-    const toolCallChunks: ToolCallChunk[] = [];
-    if (rawToolCalls && rawToolCalls.length > 0)
-      for (const rawToolCallChunk of rawToolCalls) {
-        toolCallChunks.push({
-          name: rawToolCallChunk.function?.name,
-          args: rawToolCallChunk.function?.arguments,
-          id: rawToolCallChunk.id,
-          index: rawToolCallChunk.index,
-          type: "tool_call_chunk",
-        });
+  const usageMetadata = {
+    input_tokens: usage?.prompt_tokens ?? 0,
+    output_tokens: usage?.completion_tokens ?? 0,
+    total_tokens: usage?.total_tokens ?? 0,
+  };
+
+  switch (role) {
+    case "user":
+      return new HumanMessageChunk({ content });
+
+    case "assistant": {
+      // Extract tool call chunks creation
+      const toolCallChunks: ToolCallChunk[] = [];
+      if (rawToolCalls && rawToolCalls?.length > 0) {
+        for (const rawToolCallChunk of rawToolCalls) {
+          toolCallChunks.push({
+            name: rawToolCallChunk.function?.name,
+            args: rawToolCallChunk.function?.arguments,
+            id: rawToolCallChunk.id,
+            index: rawToolCallChunk.index,
+            type: "tool_call_chunk",
+          });
+        }
       }
 
-    return new AIMessageChunk({
-      content,
-      tool_call_chunks: toolCallChunks,
-      additional_kwargs,
-      usage_metadata: {
-        input_tokens: usage?.prompt_tokens ?? 0,
-        output_tokens: usage?.completion_tokens ?? 0,
-        total_tokens: usage?.total_tokens ?? 0,
-      },
-      id: rawData.id,
-    });
-  } else if (role === "tool") {
-    if (rawToolCalls)
-      return new ToolMessageChunk({
+      return new AIMessageChunk({
+        content,
+        tool_call_chunks: toolCallChunks,
+        additional_kwargs,
+        usage_metadata: usageMetadata,
+        id: rawData.id,
+      });
+    }
+
+    case "tool":
+      if (rawToolCalls) {
+        return new ToolMessageChunk({
+          content,
+          additional_kwargs,
+          tool_call_id: _convertToValidToolId(model ?? "", rawToolCalls[0].id),
+        });
+      }
+      return null;
+
+    case "function":
+      return new FunctionMessageChunk({
         content,
         additional_kwargs,
-        tool_call_id: _convertToValidToolId(model ?? "", rawToolCalls?.[0].id),
       });
-  } else if (role === "function") {
-    return new FunctionMessageChunk({
-      content,
-      additional_kwargs,
-    });
-  } else {
-    return new ChatMessageChunk({ content, role });
+
+    default:
+      return new ChatMessageChunk({ content, role });
   }
-  return null;
 }
 
 function _convertToolChoiceToWatsonxToolChoice(
@@ -485,102 +490,107 @@ export class ChatWatsonx<
       | ChatWatsonxConstructorInput,
     includeCommonProps = true
   ) {
-    const alwaysAllowedProps = [
-      "headers",
-      "signal",
-      "tool_choice",
-      "promptIndex",
-      "ls_structured_output_format",
-    ];
+    const PROPERTY_GROUPS = {
+      ALWAYS_ALLOWED: [
+        "headers",
+        "signal",
+        "tool_choice",
+        "promptIndex",
+        "ls_structured_output_format",
+      ],
 
-    const authProps = [
-      "serviceUrl",
-      "watsonxAIApikey",
-      "watsonxAIBearerToken",
-      "watsonxAIUsername",
-      "watsonxAIPassword",
-      "watsonxAIUrl",
-      "watsonxAIAuthType",
-      "disableSSL",
-    ];
+      AUTH: [
+        "serviceUrl",
+        "watsonxAIApikey",
+        "watsonxAIBearerToken",
+        "watsonxAIUsername",
+        "watsonxAIPassword",
+        "watsonxAIUrl",
+        "watsonxAIAuthType",
+        "disableSSL",
+      ],
 
-    const sharedProps = [
-      "maxRetries",
-      "watsonxCallbacks",
-      "authenticator",
-      "serviceUrl",
-      "version",
-      "streaming",
-      "callbackManager",
-      "callbacks",
-      "maxConcurrency",
-      "cache",
-      "metadata",
-      "concurrency",
-      "onFailedAttempt",
-      "concurrency",
-      "verbose",
-      "tags",
-      "headers",
-      "signal",
-      "disableStreaming",
-      "timeout",
-      "stopSequences",
-    ];
+      SHARED: [
+        "maxRetries",
+        "watsonxCallbacks",
+        "authenticator",
+        "serviceUrl",
+        "version",
+        "streaming",
+        "callbackManager",
+        "callbacks",
+        "maxConcurrency",
+        "cache",
+        "metadata",
+        "concurrency",
+        "onFailedAttempt",
+        "verbose",
+        "tags",
+        "headers",
+        "signal",
+        "disableStreaming",
+        "timeout",
+        "stopSequences",
+      ],
 
-    const gatewayProps = [
-      "tools",
-      "frequencyPenalty",
-      "logitBias",
-      "logprobs",
-      "topLogprobs",
-      "maxTokens",
-      "n",
-      "presencePenalty",
-      "responseFormat",
-      "seed",
-      "stop",
-      "temperature",
-      "topP",
-      "model",
-      "modelGatewayKwargs",
-      "modelGateway",
-    ];
+      GATEWAY: [
+        "tools",
+        "frequencyPenalty",
+        "logitBias",
+        "logprobs",
+        "topLogprobs",
+        "maxTokens",
+        "n",
+        "presencePenalty",
+        "responseFormat",
+        "seed",
+        "stop",
+        "temperature",
+        "topP",
+        "model",
+        "modelGatewayKwargs",
+        "modelGateway",
+      ],
 
-    const deploymentProps = ["idOrName"];
+      DEPLOYMENT: ["idOrName"],
 
-    const projectOrSpaceProps = [
-      "spaceId",
-      "projectId",
-      "tools",
-      "toolChoiceOption",
-      "frequencyPenalty",
-      "logitBias",
-      "logprobs",
-      "topLogprobs",
-      "maxTokens",
-      "maxCompletionTokens",
-      "n",
-      "presencePenalty",
-      "responseFormat",
-      "seed",
-      "stop",
-      "temperature",
-      "topP",
-      "timeLimit",
-      "model",
-    ];
+      PROJECT_OR_SPACE: [
+        "spaceId",
+        "projectId",
+        "tools",
+        "toolChoiceOption",
+        "frequencyPenalty",
+        "logitBias",
+        "logprobs",
+        "topLogprobs",
+        "maxTokens",
+        "maxCompletionTokens",
+        "n",
+        "presencePenalty",
+        "responseFormat",
+        "seed",
+        "stop",
+        "temperature",
+        "topP",
+        "timeLimit",
+        "model",
+      ],
+    };
 
-    const validProps: string[] = [...alwaysAllowedProps];
-    if (includeCommonProps) validProps.push(...authProps, ...sharedProps);
+    const validProps: string[] = [...PROPERTY_GROUPS.ALWAYS_ALLOWED];
+
+    if (includeCommonProps) {
+      validProps.push(...PROPERTY_GROUPS.AUTH, ...PROPERTY_GROUPS.SHARED);
+    }
 
     if (this.modelGateway) {
-      validProps.push(...gatewayProps);
+      validProps.push(...PROPERTY_GROUPS.GATEWAY);
     } else if (this.idOrName) {
-      validProps.push(...deploymentProps);
+      validProps.push(...PROPERTY_GROUPS.DEPLOYMENT);
     } else if (this.spaceId || this.projectId) {
-      validProps.push(...projectOrSpaceProps);
+      validProps.push(...PROPERTY_GROUPS.PROJECT_OR_SPACE);
     }
+
     checkValidProps(fields, validProps);
   }
 
@@ -814,6 +824,44 @@ export class ChatWatsonx<
     return result;
   }
 
+  async _chatModelGateway(
+    scopeId: ReturnType<ChatWatsonx["scopeId"]>,
+    params: ReturnType<ChatWatsonx["invocationParams"]>,
+    messages: ChatsMessage[],
+    stream: false
+  ): Promise<Response<ChatsResponse>>;
+
+  async _chatModelGateway(
+    scopeId: ReturnType<ChatWatsonx["scopeId"]>,
+    params: ReturnType<ChatWatsonx["invocationParams"]>,
+    messages: ChatsMessage[],
+    stream: true
+  ): Promise<Stream<ChatObjectStream>>;
+
+  async _chatModelGateway(
+    scopeId: ReturnType<ChatWatsonx["scopeId"]>,
+    params: ReturnType<ChatWatsonx["invocationParams"]>,
+    messages: ChatsMessage[],
+    stream: boolean = false
+  ) {
+    if (this.gateway) {
+      if ("model" in scopeId) {
+        return this.gateway.chat.completion.create({
+          ...params,
+          ...scopeId,
+          stream,
+          messages,
+        });
+      }
+      throw new Error(
+        "No 'model' specified. Model needs to be spcified for model gateway"
+      );
+    }
+    throw new Error(
+      "'gateway' instance is not set. Please check your implementation"
+    );
+  }
+
   async _generate(
     messages: BaseMessage[],
     options: this["ParsedCallOptions"],
@@ -870,16 +918,12 @@ export class ChatWatsonx<
         this.model
       );
       const callback = () => {
-        if (this.gateway) {
-          if ("model" in scopeId) {
-            return this.gateway.chat.completion.create({
-              ...params,
-              ...scopeId,
-              messages: watsonxMessages,
-            });
-          }
-          throw new Error(
-            "No 'model' specified. Model needs to be spcified for model gateway"
+        if (this.modelGateway) {
+          return this._chatModelGateway(
+            scopeId,
+            params,
+            watsonxMessages,
+            false
           );
         }
 
@@ -953,18 +997,8 @@ export class ChatWatsonx<
     );
     const watsonxCallbacks = this.invocationCallbacks(options);
     const callback = () => {
-      if (this.gateway) {
-        if ("model" in scopeId) {
-          return this.gateway.chat.completion.create({
-            ...params,
-            ...scopeId,
-            stream: true,
-            messages: watsonxMessages,
-          });
-        }
-        throw new Error(
-          "No 'model' specified. Model needs to be spcified for model gateway"
-        );
+      if (this.modelGateway) {
+        return this._chatModelGateway(scopeId, params, watsonxMessages, true);
       }
       if (this.service) {
         if ("idOrName" in scopeId)
