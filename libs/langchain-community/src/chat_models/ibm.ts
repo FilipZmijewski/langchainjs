@@ -824,26 +824,14 @@ export class ChatWatsonx<
     return result;
   }
 
-  async _chatModelGateway(
+  async _chatModelGateway<S extends boolean = false>(
     scopeId: ReturnType<ChatWatsonx["scopeId"]>,
     params: ReturnType<ChatWatsonx["invocationParams"]>,
     messages: ChatsMessage[],
-    stream: false
-  ): Promise<Response<ChatsResponse>>;
-
-  async _chatModelGateway(
-    scopeId: ReturnType<ChatWatsonx["scopeId"]>,
-    params: ReturnType<ChatWatsonx["invocationParams"]>,
-    messages: ChatsMessage[],
-    stream: true
-  ): Promise<Stream<ChatObjectStream>>;
-
-  async _chatModelGateway(
-    scopeId: ReturnType<ChatWatsonx["scopeId"]>,
-    params: ReturnType<ChatWatsonx["invocationParams"]>,
-    messages: ChatsMessage[],
-    stream: boolean = false
-  ) {
+    stream: S = false as S
+  ): Promise<
+    S extends true ? Stream<ChatObjectStream> : Response<ChatsResponse>
+  > {
     if (this.gateway) {
       if ("model" in scopeId) {
         return this.gateway.chat.completion.create({
