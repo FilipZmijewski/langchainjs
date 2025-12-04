@@ -1,5 +1,5 @@
 import { ChatModelIntegrationTests } from "@langchain/standard-tests";
-import { AIMessageChunk, UsageMetadata } from "@langchain/core/messages";
+import { AIMessageChunk } from "@langchain/core/messages";
 import {
   ChatWatsonx,
   ChatWatsonxCallOptions,
