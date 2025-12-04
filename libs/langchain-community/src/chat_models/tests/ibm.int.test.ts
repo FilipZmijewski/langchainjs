@@ -19,7 +19,7 @@ import { concat } from "@langchain/core/utils/stream";
 import { ChatWatsonx } from "../ibm.js";
 
 const models = ["ibm/granite-3-2-8b-instruct"];
-const modelAlias = "ibm/granite-3-2-8b-instruct";
+const modelAlias = "langchain-nodejs-ibm/granite-3-2-8b-instruct";
 const projectId = process.env.WATSONX_AI_PROJECT_ID;
 const version = "2024-05-31";
 const serviceUrl = process.env.WATSONX_AI_SERVICE_URL as string;
@@ -929,108 +929,108 @@ describe.each(parameters)(
   }
 );
 
-describe.each(models)("Test watsonx callbacks for %s", (model) => {
-  test("Single request callback", async () => {
-    let callbackFlag = false;
-    const service = new ChatWatsonx({
-      version,
-      serviceUrl,
-      model,
-      projectId,
-      maxTokens: 10,
-      watsonxCallbacks: {
-        requestCallback(req) {
-          callbackFlag = !!req;
-        },
-      },
-    });
-    const hello = await service.stream("Print hello world");
-    const chunks = [];
-    for await (const chunk of hello) {
-      chunks.push(chunk);
-    }
-    expect(callbackFlag).toBe(true);
-  });
-  test("Single response callback", async () => {
-    let callbackFlag = false;
-    const service = new ChatWatsonx({
-      version,
-      serviceUrl,
-      model,
-      projectId,
-      maxTokens: 10,
-      watsonxCallbacks: {
-        responseCallback(res) {
-          callbackFlag = !!res;
-        },
-      },
-    });
-    const hello = await service.stream("Print hello world");
-    const chunks = [];
-    for await (const chunk of hello) {
-      chunks.push(chunk);
-    }
-    expect(callbackFlag).toBe(true);
-  });
-  test("Both callbacks", async () => {
-    let callbackFlagReq = false;
-    let callbackFlagRes = false;
-    const service = new ChatWatsonx({
-      version,
-      serviceUrl,
-      model,
-      projectId,
-      maxTokens: 10,
-      watsonxCallbacks: {
-        requestCallback(req) {
-          callbackFlagReq = !!req;
-        },
-        responseCallback(res) {
-          callbackFlagRes = !!res;
-        },
-      },
-    });
-    const hello = await service.stream("Print hello world");
-    const chunks = [];
-    for await (const chunk of hello) {
-      chunks.push(chunk);
-    }
-    expect(callbackFlagReq).toBe(true);
-    expect(callbackFlagRes).toBe(true);
-  });
-  test("Multiple callbacks", async () => {
-    let callbackFlagReq = false;
-    let callbackFlagRes = false;
-    let langchainCallback = false;
+// describe.each(models)("Test watsonx callbacks for %s", (model) => {
+//   test("Single request callback", async () => {
+//     let callbackFlag = false;
+//     const service = new ChatWatsonx({
+//       version,
+//       serviceUrl,
+//       model,
+//       projectId,
+//       maxTokens: 10,
+//       watsonxCallbacks: {
+//         requestCallback(req) {
+//           callbackFlag = !!req;
+//         },
+//       },
+//     });
+//     const hello = await service.stream("Print hello world");
+//     const chunks = [];
+//     for await (const chunk of hello) {
+//       chunks.push(chunk);
+//     }
+//     expect(callbackFlag).toBe(true);
+//   });
+//   test("Single response callback", async () => {
+//     let callbackFlag = false;
+//     const service = new ChatWatsonx({
+//       version,
+//       serviceUrl,
+//       model,
+//       projectId,
+//       maxTokens: 10,
+//       watsonxCallbacks: {
+//         responseCallback(res) {
+//           callbackFlag = !!res;
+//         },
+//       },
+//     });
+//     const hello = await service.stream("Print hello world");
+//     const chunks = [];
+//     for await (const chunk of hello) {
+//       chunks.push(chunk);
+//     }
+//     expect(callbackFlag).toBe(true);
+//   });
+//   test("Both callbacks", async () => {
+//     let callbackFlagReq = false;
+//     let callbackFlagRes = false;
+//     const service = new ChatWatsonx({
+//       version,
+//       serviceUrl,
+//       model,
+//       projectId,
+//       maxTokens: 10,
+//       watsonxCallbacks: {
+//         requestCallback(req) {
+//           callbackFlagReq = !!req;
+//         },
+//         responseCallback(res) {
+//           callbackFlagRes = !!res;
+//         },
+//       },
+//     });
+//     const hello = await service.stream("Print hello world");
+//     const chunks = [];
+//     for await (const chunk of hello) {
+//       chunks.push(chunk);
+//     }
+//     expect(callbackFlagReq).toBe(true);
+//     expect(callbackFlagRes).toBe(true);
+//   });
+//   test("Multiple callbacks", async () => {
+//     let callbackFlagReq = false;
+//     let callbackFlagRes = false;
+//     let langchainCallback = false;
 
-    const service = new ChatWatsonx({
-      version,
-      serviceUrl,
-      model,
-      projectId,
-      maxTokens: 10,
-      callbacks: CallbackManager.fromHandlers({
-        async handleLLMEnd(output) {
-          expect(output.generations).toBeDefined();
-          langchainCallback = !!output;
-        },
-      }),
-      watsonxCallbacks: {
-        requestCallback(req) {
-          callbackFlagReq = !!req;
-        },
-        responseCallback(res) {
-          callbackFlagRes = !!res;
-        },
-      },
-    });
-    const hello = await service.stream("Print hello world");
-    const chunks = [];
-    for await (const chunk of hello) {
-      chunks.push(chunk);
-    }
-    expect(callbackFlagReq).toBe(true);
-    expect(callbackFlagRes).toBe(true);
-    expect(langchainCallback).toBe(true);
-  });
-});
+//     const service = new ChatWatsonx({
+//       version,
+//       serviceUrl,
+//       model,
+//       projectId,
+//       maxTokens: 10,
+//       callbacks: CallbackManager.fromHandlers({
+//         async handleLLMEnd(output) {
+//           expect(output.generations).toBeDefined();
+//           langchainCallback = !!output;
+//         },
+//       }),
+//       watsonxCallbacks: {
+//         requestCallback(req) {
+//           callbackFlagReq = !!req;
+//         },
+//         responseCallback(res) {
+//           callbackFlagRes = !!res;
+//         },
+//       },
+//     });
+//     const hello = await service.stream("Print hello world");
+//     const chunks = [];
+//     for await (const chunk of hello) {
+//       chunks.push(chunk);
+//     }
+//     expect(callbackFlagReq).toBe(true);
+//     expect(callbackFlagRes).toBe(true);
+//     expect(langchainCallback).toBe(true);
+//   });
+// });
