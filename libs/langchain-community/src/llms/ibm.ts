@@ -641,10 +641,6 @@ export class WatsonxLLM<
     if (this.streaming) {
       const generations: Generation[][] = await Promise.all(
         prompts.map(async (prompt, promptIdx) => {
-          if (options.signal?.aborted) {
-            throw new Error("AbortError");
-          }
-
           const stream = this._streamResponseChunks(prompt, options);
           const geneartionsArray: GenerationInfo[] = [];
 
@@ -689,10 +685,6 @@ export class WatsonxLLM<
     } else {
       const generations: Generation[][] = await Promise.all(
         prompts.map(async (prompt) => {
-          if (options.signal?.aborted) {
-            throw new Error("AbortError");
-          }
-
           const callback = () =>
             this.generateSingleMessage(prompt, options, false);
           type ReturnMessage = ReturnType<typeof callback>;
@@ -760,10 +752,6 @@ export class WatsonxLLM<
       },
     };
     for await (const chunk of streamInferDeployedPrompt) {
-      if (options.signal?.aborted) {
-        throw new Error("AbortError");
-      }
-
       const results =
         "model_id" in chunk.data
           ? chunk.data.results.entries()
