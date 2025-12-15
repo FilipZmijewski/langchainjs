@@ -34,6 +34,123 @@ import { getDebugLog } from "./logging.js";
 const debugLog = getDebugLog("tools");
 
 /**
+ * JSON Schema type definitions for dereferencing $defs.
+ */
+type JsonSchemaObject = {
+  type?: string;
+  properties?: Record<string, JsonSchemaObject>;
+  items?: JsonSchemaObject | JsonSchemaObject[];
+  additionalProperties?: boolean | JsonSchemaObject;
+  $ref?: string;
+  $defs?: Record<string, JsonSchemaObject>;
+  definitions?: Record<string, JsonSchemaObject>;
+  allOf?: JsonSchemaObject[];
+  anyOf?: JsonSchemaObject[];
+  oneOf?: JsonSchemaObject[];
+  not?: JsonSchemaObject;
+  if?: JsonSchemaObject;
+  then?: JsonSchemaObject;
+  else?: JsonSchemaObject;
+  required?: string[];
+  description?: string;
+  default?: unknown;
+  enum?: unknown[];
+  const?: unknown;
+  [key: string]: unknown;
+};
+
+/**
+ * Dereferences $ref pointers in a JSON Schema by inlining the definitions from $defs.
+ * This is necessary because some JSON Schema validators (like @cfworker/json-schema)
+ * don't automatically resolve $ref references to $defs.
+ *
+ * @param schema - The JSON Schema to dereference
+ * @returns A new schema with all $ref pointers resolved
+ */
+function dereferenceJsonSchema(schema: JsonSchemaObject): JsonSchemaObject {
+  const definitions = schema.$defs ?? schema.definitions ?? {};
+
+  /**
+   * Recursively resolve $ref pointers in the schema.
+   * Tracks visited refs to prevent infinite recursion with circular references.
+   */
+  function resolveRefs(
+    obj: JsonSchemaObject,
+    visitedRefs: Set<string> = new Set()
+  ): JsonSchemaObject {
+    if (typeof obj !== "object" || obj === null) {
+      return obj;
+    }
+
+    // Handle $ref
+    if (obj.$ref && typeof obj.$ref === "string") {
+      const refPath = obj.$ref;
+
+      // Only handle local references to $defs or definitions
+      const defsMatch = refPath.match(/^#\/\$defs\/(.+)$/);
+      const definitionsMatch = refPath.match(/^#\/definitions\/(.+)$/);
+      const match = defsMatch || definitionsMatch;
+
+      if (match) {
+        const defName = match[1];
+        const definition = definitions[defName];
+
+        if (definition) {
+          // Check for circular reference
+          if (visitedRefs.has(refPath)) {
+            // Return a placeholder for circular refs to avoid infinite loop
+            debugLog(
+              `WARNING: Circular reference detected for ${refPath}, using empty object`
+            );
+            return { type: "object" };
+          }
+
+          // Track this ref as visited
+          const newVisitedRefs = new Set(visitedRefs);
+          newVisitedRefs.add(refPath);
+
+          // Merge the resolved definition with any other properties from the original object
+          // (excluding $ref itself)
+          const { $ref: _, ...restOfObj } = obj;
+          const resolvedDef = resolveRefs(definition, newVisitedRefs);
+          return { ...resolvedDef, ...restOfObj };
+        } else {
+          debugLog(`WARNING: Could not resolve $ref: ${refPath}`);
+        }
+      }
+      // For non-local refs, return as-is
+      return obj;
+    }
+
+    // Recursively process all properties
+    const result: JsonSchemaObject = {};
+
+    for (const [key, value] of Object.entries(obj)) {
+      // Skip $defs and definitions as they're no longer needed after dereferencing
+      if (key === "$defs" || key === "definitions") {
+        continue;
+      }
+
+      if (Array.isArray(value)) {
+        result[key] = value.map((item) =>
+          typeof item === "object" && item !== null
+            ? resolveRefs(item as JsonSchemaObject, visitedRefs)
+            : item
+        );
+      } else if (typeof value === "object" && value !== null) {
+        result[key] = resolveRefs(value as JsonSchemaObject, visitedRefs);
+      } else {
+        result[key] = value;
+      }
+    }
+
+    return result;
+  }
+
+  return resolveRefs(schema);
+}
+
+/**
  * MCP instance is either a Client or a MCPClient.
  *
  * `MCPClient`: is the base instance from the `@modelcontextprotocol/sdk` package.
@@ -261,6 +378,46 @@ async function _embeddedResourceToArtifact(
 }
 
 /**
+ * Special artifact type for structured content from MCP tool results
+ * @internal
+ */
+type MCPStructuredContentArtifact = {
+  type: "mcp_structured_content";
+  data: NonNullable<CallToolResult["structuredContent"]>;
+};
+
+/**
+ * Special artifact type for meta information from MCP tool results
+ * @internal
+ */
+type MCPMetaArtifact = {
+  type: "mcp_meta";
+  data: NonNullable<CallToolResult["_meta"]>;
+};
+
+/**
+ * Extended artifact type that includes MCP-specific artifacts
+ * @internal
+ */
+type ExtendedArtifact =
+  | EmbeddedResource
+  | ContentBlock.Multimodal.Standard
+  | MCPStructuredContentArtifact
+  | MCPMetaArtifact;
+
+/**
+ * Content type that may include structuredContent and meta
+ * @internal
+ */
+type ExtendedContent =
+  | (ContentBlock | ContentBlock.Multimodal.Standard)[]
+  | (ContentBlock.Text & {
+      structuredContent?: NonNullable<CallToolResult["structuredContent"]>;
+      meta?: NonNullable<CallToolResult["_meta"]>;
+    })
+  | string;
+
+/**
  * @internal
  */
 type ConvertCallToolResultArgs = {
@@ -323,12 +480,7 @@ async function _convertCallToolResult({
   client,
   useStandardContentBlocks,
   outputHandling,
-}: ConvertCallToolResultArgs): Promise<
-  [
-    (ContentBlock | ContentBlock.Multimodal.Standard)[],
-    (EmbeddedResource | ContentBlock.Multimodal.Standard)[],
-  ]
-> {
+}: ConvertCallToolResultArgs): Promise<[ExtendedContent, ExtendedArtifact[]]> {
   if (!result) {
     throw new ToolException(
       `MCP tool '${toolName}' on server '${serverName}' returned an invalid result - tool call response was undefined`
@@ -391,13 +543,47 @@ async function _convertCallToolResult({
     )
   ).flat();
 
-  if (convertedContent.length === 1 && convertedContent[0].type === "text") {
-    // FIXME: get rid of this assertion
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return [convertedContent[0].text as any, artifacts];
+  // Extract structuredContent and _meta from result
+  // These are optional fields that are part of the CallToolResult type
+  const structuredContent = result.structuredContent;
+  const meta = result._meta;
+
+  // Add structuredContent and meta as special artifacts
+  const enhancedArtifacts: ExtendedArtifact[] = [...artifacts];
+  if (structuredContent) {
+    enhancedArtifacts.push({
+      type: "mcp_structured_content",
+      data: structuredContent,
+    });
+  }
+  if (meta) {
+    enhancedArtifacts.push({
+      type: "mcp_meta",
+      data: meta,
+    });
   }
 
-  return [convertedContent, artifacts];
+  // If we have structuredContent or meta, create an enhanced content that includes all info
+  if (convertedContent.length === 1 && convertedContent[0].type === "text") {
+    const textBlock = convertedContent[0] as ContentBlock.Text;
+    const textContent = textBlock.text;
+
+    // If we have structuredContent or meta, wrap the content with additional info
+    if (structuredContent || meta) {
+      return [
+        {
+          ...textBlock,
+          ...(structuredContent ? { structuredContent } : {}),
+          ...(meta ? { meta } : {}),
+        } as ExtendedContent,
+        enhancedArtifacts,
+      ];
+    }
+
+    return [textContent as ExtendedContent, enhancedArtifacts];
+  }
+
+  return [convertedContent as ExtendedContent, enhancedArtifacts];
 }
 
 /**
@@ -451,11 +637,7 @@ type CallToolArgs = {
 };
 
 type ContentBlocksWithArtifacts =
-  | [
-      (ContentBlock | ContentBlock.Multimodal.Standard)[],
-      (EmbeddedResource | ContentBlock.Multimodal.Standard)[],
-    ]
-  | [string, (EmbeddedResource | ContentBlock.Multimodal.Standard)[]]
+  | [ExtendedContent, ExtendedArtifact[]]
   | Command;
 
 /**
@@ -483,8 +665,13 @@ async function _callTool({
     debugLog(`INFO: Calling tool ${toolName}(${JSON.stringify(args)})`);
 
     // Extract timeout from RunnableConfig and pass to MCP SDK
+    // Note: ensureConfig() converts timeout into an AbortSignal and deletes the timeout field.
+    // To preserve the numeric timeout for SDKs that accept an explicit timeout value, we read
+    // it from metadata.timeoutMs if present, falling back to any direct timeout.
+    const numericTimeout =
+      (config?.metadata?.timeoutMs as number | undefined) ?? config?.timeout;
     const requestOptions: RequestOptions = {
-      ...(config?.timeout ? { timeout: config.timeout } : {}),
+      ...(numericTimeout ? { timeout: numericTimeout } : {}),
       ...(config?.signal ? { signal: config.signal } : {}),
       ...(onProgress
         ? {
@@ -562,11 +749,45 @@ async function _callTool({
       outputHandling,
     });
 
+    // Convert ExtendedContent to the format expected by afterToolCall
+    // afterToolCall expects: string | (ContentBlock | ContentBlock.Data.DataContentBlock)[]
+    // ExtendedContent can be: string | ContentBlock[] | (ContentBlock.Text & {...})
+    const normalizedContent:
+      | string
+      | (ContentBlock | ContentBlock.Data.DataContentBlock)[] =
+      typeof content === "string"
+        ? content
+        : Array.isArray(content)
+          ? (content as (ContentBlock | ContentBlock.Data.DataContentBlock)[])
+          : ([content] as (
+              | ContentBlock
+              | ContentBlock.Data.DataContentBlock
+            )[]);
+
+    // Filter artifacts to only include types expected by afterToolCall
+    // afterToolCall expects: (EmbeddedResource | ContentBlock.Multimodal.Standard)[]
+    // ExtendedArtifact includes additional types (MCPStructuredContentArtifact, MCPMetaArtifact)
+    // which need to be filtered out
+    const normalizedArtifacts: (
+      | EmbeddedResource
+      | ContentBlock.Multimodal.Standard
+    )[] = artifacts.filter(
+      (
+        artifact
+      ): artifact is EmbeddedResource | ContentBlock.Multimodal.Standard =>
+        artifact.type === "resource" ||
+        (artifact.type !== "mcp_structured_content" &&
+          artifact.type !== "mcp_meta" &&
+          typeof artifact === "object" &&
+          artifact !== null &&
+          "source_type" in artifact)
+    ) as (EmbeddedResource | ContentBlock.Multimodal.Standard)[];
+
     const interceptedResult = await afterToolCall?.(
       {
         name: toolName,
         args: finalArgs,
-        result: [content, artifacts],
+        result: [normalizedContent, normalizedArtifacts],
         serverName,
       },
       state,
@@ -675,10 +896,16 @@ export async function loadMcpTools(
               tool.inputSchema.properties = {};
             }
 
+            // Dereference $defs/$ref in the schema to support Pydantic v2 schemas
+            // and other JSON schemas that use $defs for nested type definitions
+            const dereferencedSchema = dereferenceJsonSchema(
+              tool.inputSchema as JsonSchemaObject
+            );
+
             const dst = new DynamicStructuredTool({
               name: `${toolNamePrefix}${tool.name}`,
               description: tool.description || "",
-              schema: tool.inputSchema,
+              schema: dereferencedSchema,
               responseFormat: "content_and_artifact",
               metadata: { annotations: tool.annotations },
               defaultConfig: defaultToolTimeout

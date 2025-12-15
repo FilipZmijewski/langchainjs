@@ -102,12 +102,22 @@ export function convertToGeminiTools(tools: GoogleAIToolType[]): GeminiTool[] {
           ...funcs
         );
       } else if (isLangChainTool(tool)) {
-        const jsonSchema = schemaToGeminiParameters(tool.schema);
-        geminiTools[functionDeclarationsIndex].functionDeclarations!.push({
-          name: tool.name,
-          description: tool.description ?? `A function available to call.`,
-          parameters: jsonSchema as GeminiFunctionSchema,
-        });
+        try {
+          const jsonSchema = schemaToGeminiParameters(tool.schema);
+          geminiTools[functionDeclarationsIndex].functionDeclarations!.push({
+            name: tool.name,
+            description: tool.description ?? `A function available to call.`,
+            parameters: jsonSchema as GeminiFunctionSchema,
+          });
+        } catch (error) {
+          const errorMessage =
+            error && typeof error === "object" && "message" in error
+              ? String(error.message)
+              : String(error);
+          throw new Error(
+            `Failed to convert tool '${tool.name}' schema for Gemini: ${errorMessage}. `
+          );
+        }
       } else if (isOpenAITool(tool)) {
         geminiTools[functionDeclarationsIndex].functionDeclarations!.push({
           name: tool.function.name,
@@ -197,6 +207,8 @@ export function copyAIModelParamsInto(
     options?.responseMimeType ??
     params?.responseMimeType ??
     target?.responseMimeType;
+  ret.responseSchema =
+    options?.responseSchema ?? params?.responseSchema ?? target?.responseSchema;
   ret.responseModalities =
     options?.responseModalities ??
     params?.responseModalities ??

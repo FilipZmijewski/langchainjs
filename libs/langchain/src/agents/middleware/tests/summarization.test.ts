@@ -830,4 +830,163 @@ describe("summarizationMiddleware", () => {
       !(AIMessage.isInstance(firstPreserved) && hasToolCalls(firstPreserved))
     ).toBe(true);
   });
+
+  it("should use default summaryPrefix when not provided", async () => {
+    const summarizationModel = createMockSummarizationModel();
+    const model = createMockMainModel();
+
+    const middleware = summarizationMiddleware({
+      model: summarizationModel as any,
+      trigger: { tokens: 50 },
+      keep: { messages: 2 },
+    });
+
+    const agent = createAgent({
+      model,
+      middleware: [middleware],
+    });
+
+    const messages = [
+      new HumanMessage(`Message 1: ${"x".repeat(200)}`),
+      new AIMessage(`Response 1: ${"x".repeat(200)}`),
+      new HumanMessage(`Message 2: ${"x".repeat(200)}`),
+      new AIMessage(`Response 2: ${"x".repeat(200)}`),
+      new HumanMessage("Final question"),
+    ];
+
+    const result = await agent.invoke({ messages });
+
+    // Verify summarization was triggered
+    expect(summarizationModel.invoke).toHaveBeenCalled();
+
+    // Verify the default prefix is used
+    const summaryMessage = result.messages[0] as HumanMessage;
+    expect(summaryMessage.content).toContain(
+      "Here is a summary of the conversation to date:"
+    );
+  });
+
+  it("should use custom summaryPrefix when provided", async () => {
+    const summarizationModel = createMockSummarizationModel();
+    const model = createMockMainModel();
+
+    const customPrefix = "Custom summary prefix for testing:";
+
+    const middleware = summarizationMiddleware({
+      model: summarizationModel as any,
+      trigger: { tokens: 50 },
+      keep: { messages: 2 },
+      summaryPrefix: customPrefix,
+    });
+
+    const agent = createAgent({
+      model,
+      middleware: [middleware],
+    });
+
+    const messages = [
+      new HumanMessage(`Message 1: ${"x".repeat(200)}`),
+      new AIMessage(`Response 1: ${"x".repeat(200)}`),
+      new HumanMessage(`Message 2: ${"x".repeat(200)}`),
+      new AIMessage(`Response 2: ${"x".repeat(200)}`),
+      new HumanMessage("Final question"),
+    ];
+
+    const result = await agent.invoke({ messages });
+
+    // Verify summarization was triggered
+    expect(summarizationModel.invoke).toHaveBeenCalled();
+
+    // Verify the custom prefix is used
+    const summaryMessage = result.messages[0] as HumanMessage;
+    expect(summaryMessage.content).toContain(customPrefix);
+    expect(summaryMessage.content).not.toContain(
+      "Here is a summary of the conversation to date:"
+    );
+  });
+
+  it("should not leak summarization model streaming chunks when using streamMode messages", async () => {
+    const SUMMARIZATION_RAW_OUTPUT =
+      "INTERNAL_SUMMARY_OUTPUT_SHOULD_NOT_BE_STREAMED_AS_AI_MESSAGE";
+    const MAIN_MODEL_CONTENT =
+      "I understand your project. Let me analyze the architecture.";
+
+    // Create a summarization model with distinctive content
+    const summarizationModel = {
+      invoke: vi.fn().mockImplementation(async () => {
+        return { content: SUMMARIZATION_RAW_OUTPUT };
+      }),
+      getName: () => "mock-summarizer",
+      _modelType: "mock",
+      lc_runnable: true,
+      profile: {},
+    };
+
+    // Create a main model with a distinctive response
+    const model = new FakeToolCallingChatModel({
+      responses: [new AIMessage(MAIN_MODEL_CONTENT)],
+    });
+
+    const middleware = summarizationMiddleware({
+      model: summarizationModel as any,
+      trigger: { tokens: 50 },
+      keep: { messages: 2 },
+    });
+
+    const agent = createAgent({
+      model,
+      middleware: [middleware],
+    });
+
+    // Create enough messages to trigger summarization
+    const inputMessages = [
+      new HumanMessage(`Message 1: ${"x".repeat(200)}`),
+      new AIMessage(`Response 1: ${"x".repeat(200)}`),
+      new HumanMessage(`Message 2: ${"x".repeat(200)}`),
+      new AIMessage(`Response 2: ${"x".repeat(200)}`),
+      new HumanMessage("Final question"),
+    ];
+
+    // Stream with messages mode to capture all message chunks
+    const stream = await agent.stream(
+      { messages: inputMessages },
+      { streamMode: ["messages"] }
+    );
+
+    // Collect all streamed AIMessage content (only assistant/AI responses)
+    const streamedAIContents: string[] = [];
+    for await (const [mode, chunk] of stream) {
+      if (mode === "messages") {
+        const [msg] = chunk as [any, any];
+        // Only collect AIMessage content (role === "assistant" or type === "ai")
+        const isAIMessage =
+          msg._getType?.() === "ai" ||
+          msg.role === "assistant" ||
+          AIMessage.isInstance(msg);
+        if (isAIMessage) {
+          const content =
+            typeof msg.content === "string"
+              ? msg.content
+              : JSON.stringify(msg.content);
+          if (content) {
+            streamedAIContents.push(content);
+          }
+        }
+      }
+    }
+
+    // Verify summarization was triggered
+    expect(summarizationModel.invoke).toHaveBeenCalled();
+
+    // Verify the raw summarization model output does NOT appear as an AIMessage
+    // This would happen if callbacks leaked from the internal model.invoke()
+    const allStreamedAIContent = streamedAIContents.join(" ");
+    expect(allStreamedAIContent).not.toContain(
+      "INTERNAL_SUMMARY_OUTPUT_SHOULD_NOT_BE_STREAMED_AS_AI_MESSAGE"
+    );
+    expect(allStreamedAIContent).not.toContain(SUMMARIZATION_RAW_OUTPUT);
+
+    // Verify the main model's content DOES appear in the stream
+    expect(allStreamedAIContent).toContain(MAIN_MODEL_CONTENT);
+  });
 });

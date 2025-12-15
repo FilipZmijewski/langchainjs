@@ -73,7 +73,8 @@ export class ChatOpenAIResponses<
     let strict: boolean | undefined;
     if (options?.strict !== undefined) {
       strict = options.strict;
-    } else if (this.supportsStrictToolCalling !== undefined) {
+    }
+    if (strict === undefined && this.supportsStrictToolCalling !== undefined) {
       strict = this.supportsStrictToolCalling;
     }
 
@@ -139,6 +140,8 @@ export class ChatOpenAIResponses<
       parallel_tool_calls: options?.parallel_tool_calls,
       max_output_tokens: this.maxTokens === -1 ? undefined : this.maxTokens,
       prompt_cache_key: options?.promptCacheKey ?? this.promptCacheKey,
+      prompt_cache_retention:
+        options?.promptCacheRetention ?? this.promptCacheRetention,
       ...(this.zdrEnabled ? { store: false } : {}),
       ...this.modelKwargs,
     };

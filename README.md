@@ -38,12 +38,13 @@ Use LangChain for:
 
 LangChain.js is written in TypeScript and can be used in:
 
-- Node.js (ESM and CommonJS) - 18.x, 19.x, 20.x, 22.x
+- Node.js (ESM and CommonJS) - 20.x, 22.x, 24.x
 - Cloudflare Workers
 - Vercel / Next.js (Browser, Serverless and Edge functions)
 - Supabase Edge Functions
 - Browser
 - Deno
+- Bun
 
 ## 📖 Additional Resources
 
@@ -58,4 +59,4 @@ As an open-source project in a rapidly developing field, we are extremely open t
 
 For detailed information on how to contribute, see [`CONTRIBUTING.md`](https://github.com/langchain-ai/langchainjs/blob/main/CONTRIBUTING.md).
 
-Please report any security issues or concerns following our [security guidelines](https://github.com/langchain-ai/langchainjs/blob/main/SECURITY.md).
+Please report any security issues or concerns following our [security guidelines](https://github.com/langchain-ai/.github/blob/main/SECURITY.md).

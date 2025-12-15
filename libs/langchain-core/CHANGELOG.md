@@ -1,5 +1,49 @@
 # @langchain/core
 
+## 1.1.5
+
+### Patch Changes
+
+- [#9641](https://github.com/langchain-ai/langchainjs/pull/9641) [`005c729`](https://github.com/langchain-ai/langchainjs/commit/005c72903bcdf090e0f4c58960c8c243481f9874) Thanks [@christian-bromann](https://github.com/christian-bromann)! - fix(community/core): various security fixes
+
+- [#7907](https://github.com/langchain-ai/langchainjs/pull/7907) [`ab78246`](https://github.com/langchain-ai/langchainjs/commit/ab782462753e6c3ae5d55c0c251f795af32929d5) Thanks [@jasonphillips](https://github.com/jasonphillips)! - fix(core): handle subgraph nesting better in graph_mermaid
+
+- [#9589](https://github.com/langchain-ai/langchainjs/pull/9589) [`8cc81c7`](https://github.com/langchain-ai/langchainjs/commit/8cc81c7cee69530f7a6296c69123edbe227b2fce) Thanks [@nathannewyen](https://github.com/nathannewyen)! - test(core): add test for response_metadata in streamEvents
+
+- [#9644](https://github.com/langchain-ai/langchainjs/pull/9644) [`f32e499`](https://github.com/langchain-ai/langchainjs/commit/f32e4991d0e707324e3f6af287a1ee87ab833b7e) Thanks [@hntrl](https://github.com/hntrl)! - add bindTools to FakeListChatModel
+
+- [#9508](https://github.com/langchain-ai/langchainjs/pull/9508) [`a28d83d`](https://github.com/langchain-ai/langchainjs/commit/a28d83d49dd1fd31e67b52a44abc70f2cc2a2026) Thanks [@shubham-021](https://github.com/shubham-021)! - Fix toFormattedString() to properly display nested objects in tool call arguments instead of [object Object]
+
+- [#9165](https://github.com/langchain-ai/langchainjs/pull/9165) [`2e5ad70`](https://github.com/langchain-ai/langchainjs/commit/2e5ad70d16c1f13eaaea95336bbe2ec4a4a4954a) Thanks [@pawel-twardziak](https://github.com/pawel-twardziak)! - fix(mcp-adapters): preserve timeout from RunnableConfig in MCP tool calls
+
+- [#9647](https://github.com/langchain-ai/langchainjs/pull/9647) [`e456c66`](https://github.com/langchain-ai/langchainjs/commit/e456c661aa1ab8f1ed4a98c40616f5a13270e88e) Thanks [@hntrl](https://github.com/hntrl)! - handle missing parent runs in tracer to prevent LangSmith 400 errors
+
+- [#9597](https://github.com/langchain-ai/langchainjs/pull/9597) [`1cfe603`](https://github.com/langchain-ai/langchainjs/commit/1cfe603e97d8711343ae5f1f5a75648e7bd2a16e) Thanks [@hntrl](https://github.com/hntrl)! - use uuid7 for run ids
+
+## 1.1.4
+
+### Patch Changes
+
+- [#9575](https://github.com/langchain-ai/langchainjs/pull/9575) [`0bade90`](https://github.com/langchain-ai/langchainjs/commit/0bade90ed47c7988ed86f1e695a28273c7b3df50) Thanks [@hntrl](https://github.com/hntrl)! - bin p-retry
+
+- [#9574](https://github.com/langchain-ai/langchainjs/pull/9574) [`6c40d00`](https://github.com/langchain-ai/langchainjs/commit/6c40d00e926f377d249c2919549381522eac8ed1) Thanks [@hntrl](https://github.com/hntrl)! - Revert "fix(@langchain/core): update and bundle dependencies (#9534)"
+
+## 1.1.3
+
+### Patch Changes
+
+- [#9534](https://github.com/langchain-ai/langchainjs/pull/9534) [`bd2c46e`](https://github.com/langchain-ai/langchainjs/commit/bd2c46e09e661d9ac766c09e71bc6687d6fc811c) Thanks [@christian-bromann](https://github.com/christian-bromann)! - fix(@langchain/core): update and bundle `p-retry`, `ansi-styles`, `camelcase` and `decamelize` dependencies
+
+- [#9544](https://github.com/langchain-ai/langchainjs/pull/9544) [`487378b`](https://github.com/langchain-ai/langchainjs/commit/487378bf14277659c8ca0ef06ea0f9836b818ff4) Thanks [@hntrl](https://github.com/hntrl)! - fix tool chunk concat behavior (#9450)
+
+- [#9505](https://github.com/langchain-ai/langchainjs/pull/9505) [`138e7fb`](https://github.com/langchain-ai/langchainjs/commit/138e7fb6280705457079863bedb238b16b322032) Thanks [@chosh-dev](https://github.com/chosh-dev)! - feat: replace btoa with toBase64Url for encoding in drawMermaidImage
+
+## 1.1.2
+
+### Patch Changes
+
+- [#9511](https://github.com/langchain-ai/langchainjs/pull/9511) [`833f578`](https://github.com/langchain-ai/langchainjs/commit/833f57834dc3aa64e4cfdd7499f865b2ab41462a) Thanks [@dqbd](https://github.com/dqbd)! - allow parsing more partial JSON
+
 ## 1.1.1
 
 ### Patch Changes
