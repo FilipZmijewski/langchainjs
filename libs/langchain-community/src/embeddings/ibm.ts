@@ -242,31 +242,29 @@ export class WatsonxEmbeddings
     const scopeId = this.scopeId();
     if ("modelId" in scopeId && this.service) {
       const { service } = this;
-      const textEmbeddingParams = {
-        inputs,
-        ...scopeId,
-        parameters: this.invocationParams(),
-      };
       const caller = new AsyncCaller({
         maxConcurrency: this.maxConcurrency,
         maxRetries: this.maxRetries,
       });
       const embeddings = await caller.call(() =>
-        service.embedText(textEmbeddingParams)
+        service.embedText({
+          inputs,
+          ...scopeId,
+          parameters: this.invocationParams(),
+        })
       );
       return embeddings.result.results.map((item) => item.embedding);
     } else if (this.gateway && "model" in scopeId) {
       const { gateway } = this;
-      const textEmbeddingParams = {
-        input: inputs,
-        ...scopeId,
-      };
       const caller = new AsyncCaller({
         maxConcurrency: this.maxConcurrency,
         maxRetries: this.maxRetries,
       });
       const embeddings = await caller.call(() =>
-        gateway.embeddings.completion.create(textEmbeddingParams)
+        gateway.embeddings.completion.create({
+          input: inputs,
+          ...scopeId,
+        })
       );
       const res = embeddings.result.data.map((item) => item.embedding);
       return res;
