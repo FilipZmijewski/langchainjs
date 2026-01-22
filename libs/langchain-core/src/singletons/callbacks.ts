@@ -65,7 +65,7 @@ export async function consumeCallback<T>(
 export async function awaitAllCallbacks(): Promise<void> {
   const defaultClient = getDefaultLangChainClientSingleton();
   await Promise.allSettled([
-    typeof queue !== "undefined" ? queue.onEmpty() : Promise.resolve(),
+    typeof queue !== "undefined" ? queue.onIdle() : Promise.resolve(),
     defaultClient.awaitPendingTraceBatches(),
   ]);
 }
