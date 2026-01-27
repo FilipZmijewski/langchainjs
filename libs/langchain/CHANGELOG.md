@@ -1,5 +1,52 @@
 # langchain
 
+## 1.2.11
+
+### Patch Changes
+
+- [#9812](https://github.com/langchain-ai/langchainjs/pull/9812) [`b8e3da6`](https://github.com/langchain-ai/langchainjs/commit/b8e3da6618ca27e86d384a3ce6d01520861916af) Thanks [@christian-bromann](https://github.com/christian-bromann)! - fix(langchain): tag summarization model calls with lc_source metadata
+
+- Updated dependencies [[`70387a1`](https://github.com/langchain-ai/langchainjs/commit/70387a144464539d65a546c8130cf51dfad025a1), [`a7c6ec5`](https://github.com/langchain-ai/langchainjs/commit/a7c6ec51ab9baa186ab5ebf815599c08f5c7e8ab), [`5e04543`](https://github.com/langchain-ai/langchainjs/commit/5e045435a783fdae44bc9a43e01a8e5eb7100db2), [`40b4467`](https://github.com/langchain-ai/langchainjs/commit/40b446762445575844610ee528abc77c247b2c43), [`17e30bd`](https://github.com/langchain-ai/langchainjs/commit/17e30bd7f4c7bdf87c9c30304b3b9e121cc1fbbc)]:
+  - @langchain/core@1.1.16
+
+## 1.2.10
+
+### Patch Changes
+
+- [#9806](https://github.com/langchain-ai/langchainjs/pull/9806) [`cf56fc9`](https://github.com/langchain-ai/langchainjs/commit/cf56fc98aebf55a798e80cbd5c30259ffaf8ca47) Thanks [@christian-bromann](https://github.com/christian-bromann)! - fix(langchain): don't concatenate middleware error, instead use cause
+
+- Updated dependencies [[`230462d`](https://github.com/langchain-ai/langchainjs/commit/230462d28c3a8b5ccadf433ea2f523eb6e658de6)]:
+  - @langchain/core@1.1.15
+
+## 1.2.9
+
+### Patch Changes
+
+- Updated dependencies [[`bd1ab45`](https://github.com/langchain-ai/langchainjs/commit/bd1ab45364391f69ce93ecba36a4a15dafca2b76)]:
+  - @langchain/core@1.1.14
+
+## 1.2.8
+
+### Patch Changes
+
+- [#9779](https://github.com/langchain-ai/langchainjs/pull/9779) [`bb80067`](https://github.com/langchain-ai/langchainjs/commit/bb80067874af359d7347b07b75f5caa0ee246aea) Thanks [@hntrl](https://github.com/hntrl)! - add lc_source tag to summarization middleware messages
+
+- [#9784](https://github.com/langchain-ai/langchainjs/pull/9784) [`9a68b93`](https://github.com/langchain-ai/langchainjs/commit/9a68b933c13be556376244e83b18f61f051e6a5c) Thanks [@weiliddat](https://github.com/weiliddat)! - preserve reducer metadata in createAgent state schema
+
+- Updated dependencies [[`3efe79c`](https://github.com/langchain-ai/langchainjs/commit/3efe79c62ff2ffe0ada562f7eecd85be074b649a), [`b8561c1`](https://github.com/langchain-ai/langchainjs/commit/b8561c17556bdf7a3ff8d70bc307422642a9172e)]:
+  - @langchain/core@1.1.13
+
+## 1.2.7
+
+### Patch Changes
+
+- [#9517](https://github.com/langchain-ai/langchainjs/pull/9517) [`23be5af`](https://github.com/langchain-ai/langchainjs/commit/23be5afd59b5f4806edef11937ce5e2ba300f7ee) Thanks [@christian-bromann](https://github.com/christian-bromann)! - fix(langchain): Refactored agent generics to use type bag pattern (AgentTypeConfig, MiddlewareTypeConfig) with new helper types for type extraction.
+
+- [#9761](https://github.com/langchain-ai/langchainjs/pull/9761) [`e0360d9`](https://github.com/langchain-ai/langchainjs/commit/e0360d9bdc0e7725d59625902bcfc98c39931e2a) Thanks [@christian-bromann](https://github.com/christian-bromann)! - fix(langchain): ensure models only make on write_todo call at a time
+
+- Updated dependencies [[`23be5af`](https://github.com/langchain-ai/langchainjs/commit/23be5afd59b5f4806edef11937ce5e2ba300f7ee)]:
+  - @langchain/core@1.1.12
+
 ## 1.2.6
 
 ### Patch Changes

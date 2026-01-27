@@ -1,5 +1,23 @@
 # @langchain/aws
 
+## 1.2.1
+
+### Patch Changes
+
+- [#9828](https://github.com/langchain-ai/langchainjs/pull/9828) [`85f16ac`](https://github.com/langchain-ai/langchainjs/commit/85f16ace27e1af568be2e779de966f63f8791602) Thanks [@Oscar-Umana](https://github.com/Oscar-Umana)! - fix: map cache points in ToolMessage outside of tool result content block
+
+## 1.2.0
+
+### Minor Changes
+
+- [#9785](https://github.com/langchain-ai/langchainjs/pull/9785) [`01aae02`](https://github.com/langchain-ai/langchainjs/commit/01aae02d9f7253b1f0aea76e4ac614aff24f2370) Thanks [@tinque](https://github.com/tinque)! - Add support for AWS Bedrock service tiers (Priority, Standard, Flex) to the Converse API, aligned with the Python LangChain implementation.
+
+### Patch Changes
+
+- [#9777](https://github.com/langchain-ai/langchainjs/pull/9777) [`3efe79c`](https://github.com/langchain-ai/langchainjs/commit/3efe79c62ff2ffe0ada562f7eecd85be074b649a) Thanks [@christian-bromann](https://github.com/christian-bromann)! - fix(core): properly elevate reasoning tokens
+
+- [#9766](https://github.com/langchain-ai/langchainjs/pull/9766) [`5ef217e`](https://github.com/langchain-ai/langchainjs/commit/5ef217e6dc2039588d345b15210c835ec8e75ae5) Thanks [@hntrl](https://github.com/hntrl)! - target standard content trigger appropriately
+
 ## 1.1.1
 
 ### Patch Changes

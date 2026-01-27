@@ -1,5 +1,21 @@
 # @langchain/ollama
 
+## 1.2.1
+
+### Patch Changes
+
+- [#9793](https://github.com/langchain-ai/langchainjs/pull/9793) [`82d7df7`](https://github.com/langchain-ai/langchainjs/commit/82d7df7435165d1d53103f3d009011e9268be14e) Thanks [@bao-tran-iohub](https://github.com/bao-tran-iohub)! - Set additional_kwargs.reasoning_content when streamEvents via createAgent
+
+## 1.2.0
+
+### Minor Changes
+
+- [#9758](https://github.com/langchain-ai/langchainjs/pull/9758) [`442197d`](https://github.com/langchain-ai/langchainjs/commit/442197dbbae63deb884d65bc692d73dc3191b056) Thanks [@Gulianrdgd](https://github.com/Gulianrdgd)! - Adds support for the `think` parameter to the `Ollama` LLM class
+
+### Patch Changes
+
+- [#9777](https://github.com/langchain-ai/langchainjs/pull/9777) [`3efe79c`](https://github.com/langchain-ai/langchainjs/commit/3efe79c62ff2ffe0ada562f7eecd85be074b649a) Thanks [@christian-bromann](https://github.com/christian-bromann)! - fix(core): properly elevate reasoning tokens
+
 ## 1.1.0
 
 ### Minor Changes
