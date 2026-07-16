@@ -3,6 +3,15 @@ import { ChatsToolChoice } from "@ibm-cloud/watsonx-ai/gateway";
 import { BaseChatModelCallOptions } from "@langchain/core/language_models/chat_models";
 import { BaseLLMParams } from "@langchain/core/language_models/llms";
 
+// Export custom error classes
+export {
+  WatsonxError,
+  WatsonxAuthenticationError,
+  WatsonxValidationError,
+  WatsonxConfigurationError,
+  WatsonxUnsupportedOperationError,
+} from "./types/errors.js";
+
 export type Neverify<T> = {
   [K in keyof T]?: never;
 };
@@ -54,7 +63,7 @@ export interface WatsonxEmbeddingsBasicOptions
   extends WatsonxInit, WatsonxRequestBasicOptions {}
 
 export interface WatsonxBaseChatParams extends WatsonxChatBasicOptions {
-  tool_choice?: WatsonxTooChoice;
+  tool_choice?: WatsonxToolChoice;
 }
 
 export interface GenerationInfo {
@@ -75,4 +84,8 @@ export interface ResponseChunk {
   };
 }
 
+/** @deprecated Use {@link WatsonxToolChoice} instead. Typo in original name. */
 export type WatsonxTooChoice = ChatsToolChoice | string | "auto" | "any";
+
+/** Tool choice options for Watsonx chat operations. */
+export type WatsonxToolChoice = ChatsToolChoice | string | "auto" | "any";
