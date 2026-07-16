@@ -1,5 +1,9 @@
 export * from "./types.js";
 
+// Re-export auth utilities
+export { createAuthenticator, prepareInstanceConfig } from "./auth/index.js";
+export type { InstanceConfig } from "./auth/index.js";
+
 export {
   authenticateAndSetInstance,
   authenticateAndSetGatewayInstance,
