@@ -27,14 +27,34 @@ export interface TokenUsage {
 }
 
 export interface WatsonxAuth {
+  /** @deprecated Use `apiKey` instead. Will be removed in a future major version. */
   watsonxAIApikey?: string;
+  /** @deprecated Use `bearerToken` instead. Will be removed in a future major version. */
   watsonxAIBearerToken?: string;
+  /** @deprecated Use `username` instead. Will be removed in a future major version. */
   watsonxAIUsername?: string;
+  /** @deprecated Use `password` instead. Will be removed in a future major version. */
   watsonxAIPassword?: string;
+  /** @deprecated Use `authUrl` instead. Will be removed in a future major version. */
   watsonxAIUrl?: string;
+  /** @deprecated Use `authType` instead. Will be removed in a future major version. */
   watsonxAIAuthType?: string;
+  /** Disable SSL verification (only for development/testing). */
   disableSSL?: boolean;
+  /** IBM watsonx.ai service URL. */
   serviceUrl: string;
+  /** IBM Cloud API key for IAM authentication. */
+  apiKey?: string;
+  /** Bearer token for direct authentication. */
+  bearerToken?: string;
+  /** Username for Cloud Pak for Data (CP4D) authentication. */
+  username?: string;
+  /** Password for CP4D authentication. */
+  password?: string;
+  /** Authentication type: `"iam"`, `"bearertoken"`, `"cp4d"`, or `"aws"`. */
+  authType?: string;
+  /** Authentication URL for CP4D. */
+  authUrl?: string;
 }
 
 export interface WatsonxInit {
