@@ -21,7 +21,7 @@
     "clean": "rm -rf .turbo"
   },
   "dependencies": {
-    "@jest/globals": "^30.4.0",
+    "@jest/globals": "^30.4.1",
     "@langchain/core": "workspace:^",
     "zod": "^4.3.6"
   },
@@ -32,7 +32,7 @@
     "typescript": "~6.0.3"
   },
   "peerDependencies": {
-    "vitest": "^3.2.4"
+    "vitest": "^3.2.6"
   },
   "peerDependenciesMeta": {
     "vitest": {
